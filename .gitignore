@@ -2,8 +2,25 @@ base_line_tests/images/
 base_line_tests/.idea/
 base_line_tests/.ipynb_checkpoints
 base_line_tests/venv/
+base_line_tests/venv/
 facial-landmarks/
 base_line_tests/bbimages/
 base_line_tests/bbimages64/
 base_line_tests/bbimages224/
 base_line_tests/bbimagesprev/
+Merget/
+Transfer Learning/
+Facial-Keypoint-Detection
+Basic_Detector/images/
+Basic_Detector/.idea/
+Basic_Detector/.ipynb_checkpoints/
+Basic_Detector/data/
+Basic_Detector/__pycache__/
+Basic_Detector/venv/
+
+
+
+
+
+Facial-Keypoint-Detection_/
+Facial-Keypoint-Detection_/
