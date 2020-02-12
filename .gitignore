@@ -3,3 +3,7 @@ base_line_tests/.idea/
 base_line_tests/.ipynb_checkpoints
 base_line_tests/venv/
 facial-landmarks/
+base_line_tests/bbimages/
+base_line_tests/bbimages64/
+base_line_tests/bbimages224/
+base_line_tests/bbimagesprev/
