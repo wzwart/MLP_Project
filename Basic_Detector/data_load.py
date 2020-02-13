@@ -45,6 +45,41 @@ class FacialKeypointsDataset(Dataset):
 
         return sample
     
+class LandmarkDataset(Dataset):
+    """300W Landmark dataset."""
+
+    def __init__(self, csv_file, img_dir, transform=None):
+        """
+        Args:
+            csv_file: Path to the csv file with image paths and landmarks.
+            img_dir: Directory with all the images.
+        """
+        self.landmarks = pd.read_csv(csv_file)
+        self.img_dir = img_dir
+        self.transform = transform
+
+
+    def __len__(self):
+        return len(self.landmarks)
+
+    def __getitem__(self, index):
+        image_path = os.path.join(self.img_dir, self.landmarks.iloc[index, 0])
+        
+        image = mpimg.imread(image_path)
+        
+        # if image has an alpha color channel, get rid of it
+        if(image.shape[2] == 4):
+            image = image[:,:,0:3]
+        
+        landmarks = self.landmarks.iloc[index, 1:].to_numpy()
+        landmarks = landmarks.astype('float').reshape(-1, 2)
+        sample = {'image': image, 'keypoints': landmarks}
+        
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
+    
 
     
 # tranforms

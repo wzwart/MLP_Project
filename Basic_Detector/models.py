@@ -6,6 +6,8 @@ import torch.nn.functional as F
 # can use the below import should you choose to initialize the weights of your Net
 import torch.nn.init as I
 
+use_cuda = torch.cuda.is_available()
+device = torch.device('cuda:0' if use_cuda else 'cpu')
 
 class Net(nn.Module):
 
