@@ -12,5 +12,6 @@
   "num_epochs": 4,
   "experiment_name": "emnist_tutorial",
   "use_gpu": true,
+
   "weight_decay_coefficient": 1e-05
 }
