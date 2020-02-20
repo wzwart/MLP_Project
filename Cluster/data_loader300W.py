@@ -1,7 +1,7 @@
 import glob
 import os
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import numpy as np
 import matplotlib.image as mpimg
 import pandas as pd
@@ -26,7 +26,6 @@ class FacialKeypointsDataset(Dataset):
             self.max_size = len(self.key_pts_frame)
         else:
             self.max_size = max_size
-
 
     def __len__(self):
         return self.max_size
@@ -55,7 +54,6 @@ class FacialKeypointsDataset(Dataset):
         key_pts = keypoints.view((keypoints.size(0), -1))
         # convert variables to floats for regression loss
         return images.type(torch.FloatTensor), key_pts.type(torch.FloatTensor)
-
 
     
 # tranforms

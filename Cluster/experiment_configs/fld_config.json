@@ -1,7 +1,7 @@
 {
   "batch_size": 1,
   "dataset_name": "300W",
-  "continue_from_epoch": -2,
+  "continue_from_epoch": 0,
   "seed": 0,
   "image_num_channels": 1,
   "image_height": 28,
@@ -13,7 +13,7 @@
   "experiment_name": "exp_basic",
   "use_gpu": true,
   "weight_decay_coefficient": 1e-05,
-  "use_tqdm": false,
+  "use_tqdm": true,
   "max_size": 200,
 
 

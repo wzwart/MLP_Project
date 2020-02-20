@@ -25,8 +25,11 @@ import torch.utils.data as data
 from torchvision.datasets.utils import download_url, check_integrity
 from torchvision import transforms, utils
 
-from data_loader300W import FacialKeypointsDataset, DataLoader
+from data_loader300W import FacialKeypointsDataset
 from data_loader300W import Rescale, RandomCrop, Normalize,ToTensor
+
+from data_loaderUNet import UNetDataset
+
 
 class DataProvider(object):
     """Generic data provider."""
@@ -207,6 +210,59 @@ class FacesDataProvider(DataProvider):
         """Returns next data batch or raises `StopIteration` if at end."""
         inputs_batch, targets_batch = super(FacesDataProvider, self).next()
         return inputs_batch, targets_batch
+
+
+class UNetDataProvider(DataProvider):
+    """Data provider for 300W Faces."""
+
+    def __init__(self, which_set='train',
+                 filepath_to_data="",
+                 batch_size=100, max_num_batches=-1,
+                 width_in=284, height_in=284, width_out=196,
+                 height_out=196,
+                 max_size=None,
+                 shuffle_order=True, rng=None):
+        """Create a new MNIST data provider object.
+
+        Args:
+            which_set: One of 'train', 'valid' or 'eval'. Determines which
+                portion of the MNIST data this object should provide.
+            batch_size (int): Number of data points to include in each batch.
+            max_num_batches (int): Maximum number of batches to iterate over
+                in an epoch. If `max_num_batches * batch_size > num_data` then
+                only as many batches as the data can be split into will be
+                used. If set to -1 all of the data will be used.
+            shuffle_order (bool): Whether to randomly permute the order of
+                the data before each epoch.
+            rng (RandomState): A seeded random number generator.
+        """
+        # check a valid which_set was provided
+        assert which_set in ['train', 'valid', 'test'], (
+            'Expected which_set to be either train, valid or eval. '
+            'Got {0}'.format(which_set)
+        )
+        self.which_set = which_set
+
+        transformed_dataset = UNetDataset(which_set=self.which_set,
+                                                    root_dir=os.path.join(filepath_to_data),
+                                                    width_in=width_in, height_in=height_in, width_out=width_out,
+                                                    height_out=height_out,
+                                                     max_size= max_size)
+
+
+        inputs, targets = transformed_dataset.get_data()
+        # pass the loaded data to the parent class __init__
+        super(UNetDataProvider, self).__init__(
+            inputs, targets, batch_size, max_num_batches, shuffle_order, rng)
+
+    def __len__(self):
+        return self.num_batches
+
+    def next(self):
+        """Returns next data batch or raises `StopIteration` if at end."""
+        inputs_batch, targets_batch = super(FacesDataProvider, self).next()
+        return inputs_batch, targets_batch
+
 
 class MNISTDataProvider(DataProvider):
     """Data provider for MNIST handwritten digit images."""

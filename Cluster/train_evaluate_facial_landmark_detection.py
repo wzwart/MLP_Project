@@ -46,6 +46,50 @@ if args.dataset_name == '300W':
                                                  max_size=max_size,
                                                  filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
 
+
+elif args.dataset_name == 'UNet':
+    if os.path.isdir(args.filepath_to_data_1):
+        filepath_to_data=args.filepath_to_data_1
+
+        print(f"No1 {args.filepath_to_data_1} exists")
+
+    elif os.path.isdir(args.filepath_to_data_2):
+        filepath_to_data=args.filepath_to_data_2
+        print(f"No2 {args.filepath_to_data_2} exists")
+
+    else:
+        raise FileExistsError
+
+    try:
+        max_size = int(args.max_size)
+    except:
+        max_size=None
+        pass
+
+    width_in = 284
+    height_in = 284
+    width_out = 196
+    height_out = 196
+
+    train_data = data_providers.UNetDataProvider(which_set='train', batch_size=args.batch_size,
+                                                   rng=rng,
+                                                 width_in=width_in, height_in=height_in, width_out=width_out,
+                                                 height_out=height_out,
+                                                  max_size=max_size,
+                                                  filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
+    val_data = data_providers.UNetDataProvider(which_set='valid', batch_size=args.batch_size,
+                                                rng=rng,
+                                                width_in=width_in, height_in=height_in, width_out=width_out,
+                                                height_out=height_out,
+                                                max_size=max_size,
+                                                filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
+    test_data = data_providers.UNetDataProvider(which_set='test', batch_size=args.batch_size,
+                                                  rng=rng,
+                                                 width_in=width_in, height_in=height_in, width_out=width_out,
+                                                 height_out=height_out,
+                                                 max_size=max_size,
+                                                 filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
+
 else:
     print("Data Set not supported")
     raise Exception
@@ -60,6 +104,7 @@ conv_experiment = ExperimentBuilder(network_model=custom_conv_net, use_gpu=args.
                                     num_epochs=args.num_epochs,
                                     weight_decay_coefficient=args.weight_decay_coefficient,
                                     continue_from_epoch=args.continue_from_epoch,
+                                    use_tqdm = args.use_tqdm,
                                     train_data=train_data, val_data=val_data,
                                     test_data=test_data)  # build an experiment object
 
