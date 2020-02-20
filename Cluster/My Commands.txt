@@ -14,7 +14,7 @@ cd /home/s1999534/mlpractical/cluster_experiment_scripts
 
 sbatch fld_standard_single_gpu.sh
 
-sbatch emnist_short_single_gpu_tutorial.sh
+
 
 squeue -u s1999534
 
