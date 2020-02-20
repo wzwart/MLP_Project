@@ -1,0 +1,40 @@
+
+
+Logging into MLP:
+
+First connect to UoE over VPN
+sshpass -p "w*wZ47Ws" ssh -o StrictHostKeyChecking=no -A s1999534@student.ssh.inf.ed.ac.uk
+ssh student.login
+ssh mlp1
+
+source .bashrc
+source activate mlp
+cd mlpractical
+cd /home/s1999534/mlpractical/cluster_experiment_scripts
+
+sbatch fld_standard_single_gpu.sh
+
+sbatch emnist_short_single_gpu_tutorial.sh
+
+squeue -u s1999534
+
+scancel <job-id>
+
+On Local Machine:
+cd /mnt/c/Data\ Science/Machine\ Learning\ Practical,\ MLP/MLP_Project/Server/
+
+Sync
+
+./dsync.sh
+
+Copying datasets:
+
+goto and or create:
+
+then do:
+
+mkdir data
+cd data
+wget https://s3.amazonaws.com/video.udacity-data.com/topher/2018/May/5aea1b91_train-test-data/train-test-data.zip
+cd ..
+unzip -n data/train-test-data.zip -d data

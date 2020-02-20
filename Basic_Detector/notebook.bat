@@ -1,2 +1,2 @@
-CALL conda activate MLP
-jupyter notebook --notebook-dir "C:\Data Science\Machine Learning Practical, MLP\MLP_Project\Facial-Keypoint-Detection"
+call "C:\Data Science\Machine Learning Practical, MLP\MLP_Project\Basic_Detector\venv\Scripts\activate"
+jupyter notebook --notebook-dir "C:\Data Science\Machine Learning Practical, MLP\MLP_Project\Basic_Detector"
