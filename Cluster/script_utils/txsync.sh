@@ -1,16 +1,20 @@
 #!/bin/bash
 
 #TXSYNC:
-source paths.sh
-
-
+source pw.sh
+source exclude.sh
 echo "You are $USER"
 echo "Local Path $local_path"
 cd "$local_path"
 if [ "$USER" == "wwzwart" ]; then
+source paths_wz.sh
 echo "TX Sync in Progress"
-echo K-58%U6m | sudo -S rsync -azv -n "$exclude" -e"sshpass -p "w*wZ47Ws" ssh -o StrictHostKeyChecking=no -A s1999534@student.ssh.inf.ed.ac.uk ssh" "$local_path" s1999534@mlp1:mlpractical/
+echo "$local_pw" | sudo -S rsync -azv  "${exclude[@]}" -e"sshpass -p "$remote_pw" ssh -o StrictHostKeyChecking=no -A "$remote_user" ssh" "$local_path" "$remote_path"
 echo "TX Sync Finished"
+fi
+if [ "$USER" == "jangomezroberts" ]; then
+source paths_jan.sh
+echo "$local_pw" | sudo -S rsync -azv -n  "${exclude[@]}" -e"sshpass -p "$remote_pw" ssh -o StrictHostKeyChecking=no -A "$remote_user" ssh"  "$local_path" "$remote_path"
 fi
 if [ "$USER" == "andreu" ]; then
 echo "TX Sync in Progress"

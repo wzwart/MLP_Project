@@ -15,7 +15,7 @@ from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, train_data, val_data,
-                 test_data, weight_decay_coefficient, use_gpu, use_tqdm=True, continue_from_epoch=-1):
+                 test_data, weight_decay_coefficient, use_gpu, criterion, use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -37,6 +37,7 @@ class ExperimentBuilder(nn.Module):
         self.model.reset_parameters()
         self.device = torch.cuda.current_device()
         self.use_tqdm =use_tqdm
+        self.criterion=criterion.to(self.device)
         print("number of available devicews" , torch.cuda.device_count())
         print("Use GPU" , use_gpu)
         try:
@@ -102,7 +103,6 @@ class ExperimentBuilder(nn.Module):
             os.mkdir(self.experiment_saved_models)  # create the experiment saved models directory
 
         self.num_epochs = num_epochs
-        self.criterion = nn.CrossEntropyLoss().to(self.device)  # send the loss computation to the GPU
         if continue_from_epoch == -2:
             try:
                 self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
@@ -155,8 +155,8 @@ class ExperimentBuilder(nn.Module):
         y = y.to(self.device)
 
         out = self.model.forward(x)  # forward the data in the model
-        criterion = nn.MSELoss()
-        loss = criterion(out, y)
+
+        loss = self.criterion(out, y)
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
