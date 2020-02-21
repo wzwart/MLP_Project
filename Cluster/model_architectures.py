@@ -304,13 +304,7 @@ class FLDNetwork(nn.Module):
         """
         Re-initialize the network parameters.
         """
-        for item in self.layer_dict.children():
-            try:
-                item.reset_parameters()
-            except:
-                pass
-
-        # self.logit_linear_layer.reset_parameters()
+        return
 
 
 class UNet(nn.Module):
@@ -355,6 +349,11 @@ class UNet(nn.Module):
     def __init__(self, in_channel, out_channel):
         super(UNet, self).__init__()
         # Encode
+
+        # build the network
+        self.build_module(in_channel, out_channel)
+
+    def build_module(self, in_channel, out_channel):
         self.conv_encode1 = self.contracting_block(in_channels=in_channel, out_channels=64)
         self.conv_maxpool1 = torch.nn.MaxPool2d(kernel_size=2)
         self.conv_encode2 = self.contracting_block(64, 128)
@@ -376,6 +375,9 @@ class UNet(nn.Module):
         self.conv_decode3 = self.expansive_block(512, 256, 128)
         self.conv_decode2 = self.expansive_block(256, 128, 64)
         self.final_layer = self.final_block(128, 64, out_channel)
+
+        # initialize a module dict, which is effectively a dictionary that can collect layers and integrate them into pytorch
+        self.layer_dict = nn.ModuleDict()
 
     def crop_and_concat(self, upsampled, bypass, crop=False):
         if crop:
@@ -401,3 +403,9 @@ class UNet(nn.Module):
         decode_block1 = self.crop_and_concat(cat_layer1, encode_block1, crop=True)
         final_layer = self.final_layer(decode_block1)
         return final_layer
+
+    def reset_parameters(self):
+        """
+        Re-initialize the network parameters.
+        """
+        return

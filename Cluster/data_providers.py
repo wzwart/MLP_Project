@@ -28,7 +28,7 @@ from torchvision import transforms, utils
 from data_loader300W import FacialKeypointsDataset
 from data_loader300W import Rescale, RandomCrop, Normalize,ToTensor
 
-from data_loaderUNet import UNetDataset
+
 
 
 class DataProvider(object):
@@ -215,12 +215,8 @@ class FacesDataProvider(DataProvider):
 class UNetDataProvider(DataProvider):
     """Data provider for 300W Faces."""
 
-    def __init__(self, which_set='train',
-                 filepath_to_data="",
+    def __init__(self, dataset, which_set='train',
                  batch_size=100, max_num_batches=-1,
-                 width_in=284, height_in=284, width_out=196,
-                 height_out=196,
-                 max_size=None,
                  shuffle_order=True, rng=None):
         """Create a new MNIST data provider object.
 
@@ -242,15 +238,8 @@ class UNetDataProvider(DataProvider):
             'Got {0}'.format(which_set)
         )
         self.which_set = which_set
-
-        transformed_dataset = UNetDataset(which_set=self.which_set,
-                                                    root_dir=os.path.join(filepath_to_data),
-                                                    width_in=width_in, height_in=height_in, width_out=width_out,
-                                                    height_out=height_out,
-                                                     max_size= max_size)
-
-
-        inputs, targets = transformed_dataset.get_data()
+        self.data_set=dataset
+        inputs, targets = self.data_set.get_data(self.which_set)
         # pass the loaded data to the parent class __init__
         super(UNetDataProvider, self).__init__(
             inputs, targets, batch_size, max_num_batches, shuffle_order, rng)
@@ -260,7 +249,7 @@ class UNetDataProvider(DataProvider):
 
     def next(self):
         """Returns next data batch or raises `StopIteration` if at end."""
-        inputs_batch, targets_batch = super(FacesDataProvider, self).next()
+        inputs_batch, targets_batch = super(UNetDataProvider, self).next()
         return inputs_batch, targets_batch
 
 

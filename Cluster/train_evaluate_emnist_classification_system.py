@@ -6,6 +6,8 @@ from data_augmentations import Cutout
 from experiment_builder import ExperimentBuilder
 from model_architectures import ConvolutionalNetwork
 
+
+
 args, device = get_args()  # get arguments from command line
 rng = np.random.RandomState(seed=args.seed)  # set the seeds for the experiment
 
