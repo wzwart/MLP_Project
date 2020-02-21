@@ -20,11 +20,15 @@ squeue -u s1999534
 scancel <job-id>
 
 On Local Machine:
-cd /mnt/c/Data\ Science/Machine\ Learning\ Practical,\ MLP/MLP_Project/Server/
+cd /mnt/c/Data\ Science/Machine\ Learning\ Practical,\ MLP/MLP_Project/Cluster/
 
 Sync
 
+cd /mnt/c/Data\ Science/Machine\ Learning\ Practical,\ MLP/MLP_Project/Cluster/script_utils/
+./txsync.sh
+./rxsync.sh
 ./dsync.sh
+
 
 Copying datasets:
 

@@ -10,7 +10,7 @@ def thresh(x):
     return (x!=0)*1
 
 
-class UNetDataset(Dataset):
+class Dataset300WHM(Dataset):
     """Face Landmarks dataset."""
 
     def __init__(self, root_dir, width_in,height_in, width_out, height_out , max_size= None ):
@@ -40,7 +40,7 @@ class UNetDataset(Dataset):
 
     def create_dataset(self):
         import pickle
-        pickle_path = os.path.join(self.input_path, f"pickle_{self.max_size}.p")
+        pickle_path = os.path.join(self.input_path, f"pickle_300W_{self.max_size}.p")
         if os.path.exists(pickle_path):
             print("loading from pickle file")
             data = pickle.load(open(pickle_path, "rb"))
@@ -69,7 +69,7 @@ class UNetDataset(Dataset):
             self.x= np.array(x)
             self.y= np.array(y)
             data =(self.x, self.y)
-            pickle.dump(data, open(pickle_path, "wb"))
+            # pickle.dump(data, open(pickle_path, "wb"))
         self.length=len(self.x)
 
 
