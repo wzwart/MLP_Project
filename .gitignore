@@ -6,6 +6,7 @@ facial-landmarks/
 
 Basic_Detector/defaultData/
 Basic_Detector/data/
+Basic_Detector/300Wdata/
 Basic_Detector/venv/
 Basic_Detector/__pycache__/
 Basic_Detector/.idea/
