@@ -10,10 +10,52 @@ def thresh(x):
     return (x!=0)*1
 
 
+def resizeInput(image_file, landmarks, width, height):
+    ori_image = cv2.imread(image_file)
+    height_im, width_im, channels = ori_image.shape
+    # resize image
+    dim = (width, height)
+    resized = cv2.resize(ori_image, dim, interpolation=cv2.INTER_AREA)
+
+    # Modify landmark values
+
+    landmarks = landmarks.astype('float').reshape((int(landmarks.shape[0] / 2), 2))
+    ratio = np.array([(width_im / width), (height_im / height)])
+    landmarks = landmarks / ratio
+    landmarks = np.around(landmarks, decimals=3)
+
+    return resized, landmarks
+
+
+def bivariateGaussianProb(x, y, meanX, meanY, scale):
+    cov = np.eye(2) * 2.5 * (scale / 64)
+    x = np.array([x, y])
+    # x = xT.reshape((2,1))
+    mean = np.array([meanX, meanY])
+
+    diff = x - mean
+
+    const = 1 / (np.sqrt(np.square(2 * np.pi) * np.linalg.det(cov)))
+
+    exp = np.exp((-1 / 2) * np.dot(np.dot(diff, np.linalg.inv(cov)), diff.reshape((2, 1))))
+
+    return const * exp
+
+
+# Generate heatmap for keypoint (x,y)
+def generateHeatmap(x, y, width, height):
+    z = np.zeros((width, height))
+    for i in range(width):
+        for j in range(height):
+            z[i][j] = bivariateGaussianProb(i, j, x, y, max(width, height))
+
+    return z.T
+
+
 class Dataset300WHM(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, root_dir, width_in,height_in, width_out, height_out , max_size= None ):
+    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks, max_size= None):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -31,6 +73,7 @@ class Dataset300WHM(Dataset):
         self.height_in=height_in
         self.width_out=width_out
         self.height_out=height_out
+        self.num_landmarks=num_landmarks
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
         self.create_dataset()
 
@@ -46,30 +89,39 @@ class Dataset300WHM(Dataset):
             data = pickle.load(open(pickle_path, "rb"))
             (self.x, self.y) = data
         else:
-            subject_path = [os.path.join(self.input_path, 'Subject_0{}.mat'.format(i)) for i in range(1, 10)] + [
-                os.path.join(self.input_path, 'Subject_10.mat')]
-            m=len(subject_path)
+            path = os.path.join(self.input_path,"300W.csv")
+            dataset = pd.read_csv(path)
+
+            image_paths = dataset.iloc[:, 0].to_numpy()
+            landmarks = dataset.iloc[:, 1:].to_numpy()
+
+            for i in range(len(image_paths)):
+                image_paths[i] = "data/images/" + image_paths[i]
+
             x = []
             y = []
-            i=0
-            data_indexes = [10, 15, 20, 25, 28, 30, 32, 35, 40, 45, 50]
-            while i < m and (len(x) < self.max_size or self.max_size==-1):
-                path = subject_path[i]
-                mat = scipy.io.loadmat(path)
-                img_tensor = mat['images']
-                fluid_tensor = mat['manualFluid1']
-                img_array = np.transpose(img_tensor, (2, 0, 1)) / 255
-                img_array = resize(img_array, (img_array.shape[0], self.width_in, self.height_in))
-                fluid_array = np.transpose(fluid_tensor, (2, 0, 1))
-                fluid_array = thresh(fluid_array)
-                fluid_array = resize(fluid_array, (fluid_array.shape[0], self.width_out, self.height_out))
-                x += [np.expand_dims(img_array[idx], 0) for idx in data_indexes]
-                y += [np.expand_dims(fluid_array[idx], 0) for idx in data_indexes]
-                i+=1
+
+            for i, image_path in enumerate(image_paths):
+                if (self.max_size != -1 and len(x) >= self.max_size):
+                    break
+                # Resize the image to the input size
+                resized, points = resizeInput(image_path, landmarks[i], self.width_in, self.height_in)
+                x.append(resized)
+
+                # Scale the landmark coordinates to the output size
+                ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
+                points = np.around(points / ratio, decimals=3)
+
+                # Get the heatmap for each landmark
+                u = np.zeros((self.width_out, self.height_out, self.num_landmarks))
+                for j, (x_p, y_p) in enumerate(points[:self.num_landmarks]):
+                    u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out)
+
+                y.append(u)
             self.x= np.array(x)
             self.y= np.array(y)
             data =(self.x, self.y)
-            # pickle.dump(data, open(pickle_path, "wb"))
+            pickle.dump(data, open(pickle_path, "wb"))
         self.length=len(self.x)
 
 
