@@ -24,3 +24,10 @@ UNet/.idea/
 Cluster/exp_basic/
 *.out
 log.log
+Merget/
+landmark_detection/
+Robust_Facial_Landmark/
+mlpractical/
+landmark-detection/
+Robust-Facial-Landmark/
+Transfer Learning/
