@@ -73,6 +73,7 @@ def train_step(inputs, labels, optimizer, criterion, unet, width_out, height_out
     outputs = outputs.permute(0, 2, 3, 1)
     # outputs.shape =(batch_size, img_cols, img_rows, n_classes)
     m = outputs.shape[0]
+
     outputs = outputs.resize(m*width_out*height_out, 2)
     labels = labels.resize(m*width_out*height_out)
     loss = criterion(outputs, labels)
