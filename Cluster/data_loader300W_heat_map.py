@@ -96,7 +96,7 @@ class Dataset300WHM(Dataset):
             landmarks = dataset.iloc[:, 1:].to_numpy()
 
             for i in range(len(image_paths)):
-                image_paths[i] = "data/images/" + image_paths[i]
+                image_paths[i] = os.path.join(self.input_path,"images/" + image_paths[i])
 
             x = []
             y = []
