@@ -38,7 +38,6 @@ class BOEDataset(Dataset):
     def __len__(self):
         return self.length
 
-
     def create_dataset(self):
         import pickle
         pickle_path = os.path.join(self.input_path, f"pickle_{self.max_size}.p")
