@@ -35,18 +35,18 @@ if args.dataset_name == 'Youtube' :
         max_size=None
         pass
 
-    train_data = data_providers.FacesDataProvider('train', batch_size=args.batch_size,
-                                                   rng=rng,
+    train_data = data_providers.YoutubeDataProvider('train', batch_size=args.batch_size,
+                                                    rng=rng,
+                                                    max_size=max_size,
+                                                    filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
+    val_data = data_providers.YoutubeDataProvider('valid', batch_size=args.batch_size,
+                                                  rng=rng,
                                                   max_size=max_size,
                                                   filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
-    val_data = data_providers.FacesDataProvider('valid', batch_size=args.batch_size,
-                                                 rng=rng,
-                                                max_size=max_size,
-                                                filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
-    test_data = data_providers.FacesDataProvider('test', batch_size=args.batch_size,
-                                                  rng=rng,
-                                                 max_size=max_size,
-                                                 filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
+    test_data = data_providers.YoutubeDataProvider('test', batch_size=args.batch_size,
+                                                   rng=rng,
+                                                   max_size=max_size,
+                                                   filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
 
     net = FLDNetwork(  # initialize our network object, in this case a ConvNet
         input_shape=(args.batch_size, args.image_num_channels, args.image_height, args.image_height),
@@ -95,12 +95,12 @@ elif args.dataset_name == 'UNet' or args.dataset_name == '300W':
     else:
         raise ValueError
 
-    train_data = data_providers.UNetDataProvider(dataset=dataset,which_set='train', batch_size=args.batch_size,
-                                                   rng=rng)  # initialize our rngs using the argument set seed
-    val_data = data_providers.UNetDataProvider(dataset=dataset, which_set='valid', batch_size=args.batch_size,
+    train_data = data_providers.BOEDataProvider(dataset=dataset, which_set='train', batch_size=args.batch_size,
                                                 rng=rng)  # initialize our rngs using the argument set seed
-    test_data = data_providers.UNetDataProvider(dataset=dataset,which_set='test', batch_size=args.batch_size,
-                                                  rng=rng)  # initialize our rngs using the argument set seed
+    val_data = data_providers.BOEDataProvider(dataset=dataset, which_set='valid', batch_size=args.batch_size,
+                                              rng=rng)  # initialize our rngs using the argument set seed
+    test_data = data_providers.BOEDataProvider(dataset=dataset, which_set='test', batch_size=args.batch_size,
+                                               rng=rng)  # initialize our rngs using the argument set seed
 
     net= UNet(in_channel=1, out_channel=2)
     criterion = torch.nn.CrossEntropyLoss()
