@@ -4,9 +4,11 @@ import data_providers as data_providers
 from arg_extractor import get_args
 from data_augmentations import Cutout
 from experiment_builder import ExperimentBuilder
-from model_architectures import BasicDetectorNetwork, UNet
-from data_loaderUNet import UNetDataset
-from data_loader300W_heat_map import Dataset300WHM
+from unet import  UNet
+from basic_detector_net import BasicDetectorNetwork
+from data_set_300WHM import Dataset300WHM
+from data_set_BOE import DatasetBOE
+from data_set_youtube import DatasetYoutube
 
 
 args, device = get_args()  # get arguments from command line
@@ -30,22 +32,22 @@ if args.dataset_name == 'Youtube' :
         raise FileExistsError
 
     try:
-        max_size = int(args.max_size)
+        max_size_dataset = int(args.max_size_data_set)
     except:
-        max_size=None
+        max_size_dataset=None
         pass
 
     train_data = data_providers.DataProviderYoutube('train', batch_size=args.batch_size,
                                                     rng=rng,
-                                                    max_size=max_size,
+                                                    max_size=max_size_dataset,
                                                     filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
     val_data = data_providers.DataProviderYoutube('valid', batch_size=args.batch_size,
                                                   rng=rng,
-                                                  max_size=max_size,
+                                                  max_size=max_size_dataset,
                                                   filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
     test_data = data_providers.DataProviderYoutube('test', batch_size=args.batch_size,
                                                    rng=rng,
-                                                   max_size=max_size,
+                                                   max_size=max_size_dataset,
                                                    filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
 
     net = BasicDetectorNetwork(  # initialize our network object, in this case a ConvNet
@@ -53,10 +55,10 @@ if args.dataset_name == 'Youtube' :
         dim_reduction_type=args.dim_reduction_type, num_filters=args.num_filters, num_layers=args.num_layers,
         use_bias=False)
     criterion = torch.nn.MSELoss()
-    optimizer= torch.optim.Adam(params=net.model.parameters(), lr=0.001)
+    optimizer= torch.optim.Adam(params=net.parameters(), lr=0.001)
 
 
-elif args.dataset_name == 'UNet' or args.dataset_name == '300W':
+elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM':
     if os.path.isdir(args.filepath_to_data_1):
         filepath_to_data=args.filepath_to_data_1
 
@@ -70,28 +72,28 @@ elif args.dataset_name == 'UNet' or args.dataset_name == '300W':
         raise FileExistsError
 
     try:
-        max_size = int(args.max_size)
+        max_size_dataset = int(args.max_size_dataset)
     except:
-        max_size=None
+        max_size_dataset=None
         pass
 
     width_in = 284
     height_in = 284
     width_out = 196
     height_out = 196
-    if args.dataset_name == 'UNet':
-        dataset = UNetDataset(
+    if args.dataset_name == 'BOE':
+        dataset = DatasetBOE(
                                           root_dir=os.path.join(filepath_to_data),
                                           width_in=width_in, height_in=height_in, width_out=width_out,
                                           height_out=height_out,
-                                          max_size=max_size)
-    elif args.dataset_name == '300W':
+                                          max_size=max_size_dataset)
+    elif args.dataset_name == '300WHM':
         dataset = Dataset300WHM(
                                       root_dir=os.path.join(filepath_to_data),
                                       width_in=width_in, height_in=height_in, width_out=width_out,
                                       height_out=height_out,
                                       num_landmarks=1,
-                                      max_size=max_size)
+                                      max_size=max_size_dataset)
     else:
         raise ValueError
 
@@ -113,7 +115,6 @@ else:
 conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     experiment_name=args.experiment_name,
                                     num_epochs=args.num_epochs,
-                                    weight_decay_coefficient=args.weight_decay_coefficient,
                                     continue_from_epoch=args.continue_from_epoch,
                                     use_tqdm = args.use_tqdm,
                                     train_data=train_data, val_data=val_data,

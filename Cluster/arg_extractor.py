@@ -47,7 +47,7 @@ def get_args():
                         help='A flag indicating whether we will use GPU acceleration or not')
     parser.add_argument('--use_tqdm', nargs="?", type=str2bool, default=False,
                         help='A flag indicating whether we will use tqdm progressbar or not')
-    parser.add_argument('--max_size', nargs="?", type=str, default="None",
+    parser.add_argument('--max_size_dataset', nargs="?", type=str, default="None",
                         help='Maximum Size of dataset ')
     parser.add_argument('--filepath_to_data_2', nargs="?", type=str, default=None,
                         help='')

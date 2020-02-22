@@ -5,6 +5,7 @@ import numpy as np
 import scipy.io
 from skimage.transform import resize
 from torch.utils.data import Dataset
+import cv2
 
 def thresh(x):
     return (x!=0)*1
