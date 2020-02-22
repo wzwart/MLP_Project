@@ -33,6 +33,7 @@ class UNetDataset(Dataset):
         self.height_out=height_out
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
         self.create_dataset()
+        self.for_plotting=False
 
     def __len__(self):
         return self.length
@@ -63,18 +64,18 @@ class UNetDataset(Dataset):
                 fluid_array = np.transpose(fluid_tensor, (2, 0, 1))
                 fluid_array = thresh(fluid_array)
                 fluid_array = resize(fluid_array, (fluid_array.shape[0], self.width_out, self.height_out))
-                x += [np.expand_dims(img_array[idx], 0) for idx in data_indexes]
-                y += [np.expand_dims(fluid_array[idx], 0) for idx in data_indexes]
+                x += [img_array[idx] for idx in data_indexes]
+                y += [fluid_array[idx] for idx in data_indexes]
                 i+=1
-            self.x= np.array(x)
-            self.y= np.array(y)
+
+            self.x= np.expand_dims(np.array(x), 1)
+            y= np.array(y)
+            self.y=np.array([y, 1 - y]).transpose(1, 2, 3, 0)
             data =(self.x, self.y)
             pickle.dump(data, open(pickle_path, "wb"))
         self.length=len(self.x)
 
-
-
-    def get_data(self, which_set):
-        return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
-
+    def get_data(self, which_set, for_plotting=False):
+        x,y= self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
+        return (x,y)
 

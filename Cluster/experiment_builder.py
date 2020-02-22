@@ -15,7 +15,7 @@ from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, train_data, val_data,
-                 test_data, weight_decay_coefficient, use_gpu, criterion, use_tqdm=True, continue_from_epoch=-1):
+                 test_data, weight_decay_coefficient, use_gpu, criterion, optimizer, use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -65,10 +65,8 @@ class ExperimentBuilder(nn.Module):
         self.val_data = val_data
         self.test_data = test_data
 
-        # self.optimizer = Adam(self.model.parameters(), amsgrad=False,
-        #                             weight_decay=weight_decay_coefficient)
 
-        self.optimizer = optim.Adam(params=self.model.parameters(), lr=0.001)
+        self.optimizer =optimizer
 
         print('System learnable parameters')
         num_conv_layers = 0
@@ -153,10 +151,16 @@ class ExperimentBuilder(nn.Module):
 
         x = x.to(self.device)
         y = y.to(self.device)
-
         out = self.model.forward(x)  # forward the data in the model
 
-        loss = self.criterion(out, y)
+        if str(self.criterion)=="CrossEntropyLoss()":
+            loss_in = out.reshape((out.shape[0] * out.shape[1] * out.shape[2], out.shape[3]))
+            loss_target = y.reshape((y.shape[0] * y.shape[1] * y.shape[2], y.shape[3]))[:, 0]
+        else:
+            loss_in=out
+            loss_target=y
+
+        loss = self.criterion(loss_in, loss_target)
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
@@ -185,8 +189,14 @@ class ExperimentBuilder(nn.Module):
         y = y.to(self.device)
         out = self.model.forward(x)  # forward the data in the model
 
-        criterion = nn.MSELoss()
-        loss = criterion(out, y)
+        if str(self.criterion)=="CrossEntropyLoss()":
+            loss_in = out.reshape((out.shape[0] * out.shape[1] * out.shape[2], out.shape[3]))
+            loss_target = y.reshape((y.shape[0] * y.shape[1] * y.shape[2], y.shape[3]))[:, 0]
+        else:
+            loss_in=out
+            loss_target=y
+
+        loss = self.criterion(loss_in, loss_target)
 
         return loss.data.detach().cpu().numpy(), 3
 

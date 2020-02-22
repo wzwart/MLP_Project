@@ -111,20 +111,16 @@ class Dataset300WHM(Dataset):
                 # Scale the landmark coordinates to the output size
                 ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
                 points = np.around(points / ratio, decimals=3)
-
                 # Get the heatmap for each landmark
                 u = np.zeros((self.width_out, self.height_out, self.num_landmarks))
                 for j, (x_p, y_p) in enumerate(points[:self.num_landmarks]):
                     u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out)
-
                 y.append(u)
             self.x= np.array(x)
             self.y= np.array(y)
             data =(self.x, self.y)
             pickle.dump(data, open(pickle_path, "wb"))
         self.length=len(self.x)
-
-
 
     def get_data(self, which_set):
         return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]

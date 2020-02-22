@@ -217,7 +217,7 @@ class UNetDataProvider(DataProvider):
 
     def __init__(self, dataset, which_set='train',
                  batch_size=100, max_num_batches=-1,
-                 shuffle_order=True, rng=None):
+                 shuffle_order=False, rng=None):
         """Create a new MNIST data provider object.
 
         Args:

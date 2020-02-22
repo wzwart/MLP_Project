@@ -13,7 +13,7 @@ import torch
 import sys
 gc.collect()
 use_gpu = torch.cuda.is_available()
-use_gpu = True
+use_gpu = False
 
 def thresh(x):
     if x == 0:
@@ -35,11 +35,9 @@ def create_dataset(paths, width_in, height_in, width_out, height_out, data_index
         fluid_array = np.transpose(fluid_tensor, (2, 0 ,1))
         fluid_array = thresh(fluid_array)
         fluid_array  = resize(fluid_array, (fluid_array .shape[0], width_out, height_out))
-
-        for idx in data_indexes:
-            x += [np.expand_dims(img_array[idx], 0)]
-            y += [np.expand_dims(fluid_array[idx], 0)]
-    return np.array(x), np.array(y)
+        x += [img_array[idx] for idx in data_indexes]
+        y += [fluid_array[idx] for idx in data_indexes]
+    return np.expand_dims(np.array(x),1), np.array(y)
 
 def get_dataset(width_in, height_in, width_out, height_out):
     import pickle
@@ -51,7 +49,6 @@ def get_dataset(width_in, height_in, width_out, height_out):
         (x_train, y_train, x_val, y_val)=data
     else:
         subject_path = [os.path.join(input_path, 'Subject_0{}.mat'.format(i)) for i in range(1, 10)] + [os.path.join(input_path, 'Subject_10.mat')]
-        #subject_path = [os.path.join(input_path, 'Subject_0{}.mat'.format(i)) for i in range(1, 3)]
         m = len(subject_path)
         data_indexes = [10, 15, 20, 25, 28, 30, 32, 35, 40, 45, 50]
         mat = scipy.io.loadmat(subject_path[0])
@@ -63,25 +60,23 @@ def get_dataset(width_in, height_in, width_out, height_out):
         x_val, y_val = create_dataset(subject_path[m-1:], width_in, height_in, width_out, height_out, data_indexes, mat)
         data = (x_train, y_train, x_val, y_val)
         pickle.dump(data, open(pickle_path, "wb"))
+    y_train=np.array([y_train,1-y_train]).transpose(1,2,3,0)
+    y_val=np.array([y_val,1-y_val]).transpose(1,2,3,0)
+
     return x_train, y_train,x_val,y_val
 
 def train_step(inputs, labels, optimizer, criterion, unet, width_out, height_out):
     optimizer.zero_grad()
     # forward + backward + optimize
     outputs = unet(inputs)
-    # outputs.shape =(batch_size, n_classes, img_cols, img_rows)
-    outputs = outputs.permute(0, 2, 3, 1)
-    # outputs.shape =(batch_size, img_cols, img_rows, n_classes)
-    m = outputs.shape[0]
-
-    outputs = outputs.resize(m*width_out*height_out, 2)
-    labels = labels.resize(m*width_out*height_out)
-    loss = criterion(outputs, labels)
+    loss_in= outputs.reshape((outputs.shape[0] * outputs.shape[1] * outputs.shape[2], outputs.shape[3]))
+    loss_target=labels.reshape((labels.shape[0]*labels.shape[1]*labels.shape[2],labels.shape[3]))[:,0]
+    loss = criterion(loss_in,loss_target)
     loss.backward()
     optimizer.step()
     return loss
 
-def get_val_loss(x_val, y_val, width_out, height_out, unet):
+def get_val_loss(x_val, y_val, critrion, width_out, height_out, unet):
     x_val = torch.from_numpy(x_val).float()
     y_val = torch.from_numpy(y_val).long()
     if use_gpu:
@@ -89,12 +84,9 @@ def get_val_loss(x_val, y_val, width_out, height_out, unet):
         y_val = y_val.cuda()
     m = x_val.shape[0]
     outputs = unet(x_val)
-    # outputs.shape =(batch_size, n_classes, img_cols, img_rows) 
-    outputs = outputs.permute(0, 2, 3, 1)
-    # outputs.shape =(batch_size, img_cols, img_rows, n_classes) 
-    outputs = outputs.resize(m*width_out*height_out, 2)
-    labels = y_val.resize(m*width_out*height_out)
-    loss = F.cross_entropy(outputs, labels)
+    loss_in= outputs.reshape((outputs.shape[0] * outputs.shape[1] * outputs.shape[2], outputs.shape[3]))
+    loss_target=y_val.reshape((y_val.shape[0]*y_val.shape[1]*y_val.shape[2],y_val.shape[3]))[:,0]
+    loss = critrion(loss_in, loss_target)
     return loss.data
 
 def train(unet, batch_size, epochs, epoch_lapse, threshold, learning_rate, criterion, optimizer, x_train, y_train, x_val, y_val, width_out, height_out):
@@ -103,6 +95,7 @@ def train(unet, batch_size, epochs, epoch_lapse, threshold, learning_rate, crite
     for _ in t:
         total_loss = 0
         for i in range(epoch_iter):
+            print(i)
             batch_train_x = torch.from_numpy(x_train[i * batch_size : (i + 1) * batch_size]).float()
             batch_train_y = torch.from_numpy(y_train[i * batch_size : (i + 1) * batch_size]).long()
             if use_gpu:
@@ -111,7 +104,7 @@ def train(unet, batch_size, epochs, epoch_lapse, threshold, learning_rate, crite
             batch_loss = train_step(batch_train_x , batch_train_y, optimizer, criterion, unet, width_out, height_out)
             total_loss += batch_loss
         if (_+1) % epoch_lapse == 0:
-            val_loss = get_val_loss(x_val, y_val, width_out, height_out, unet)
+            val_loss = get_val_loss(x_val, y_val, criterion, width_out, height_out, unet)
             print("Total loss in epoch %f : %f and validation loss : %f" %(_+1, total_loss, val_loss))
     gc.collect()
 
@@ -120,10 +113,12 @@ def plot_examples(unet, datax, datay, num_examples=3):
     m = datax.shape[0]
     for row_num in range(num_examples):
         image_indx = np.random.randint(m)
+
         image_arr = unet(torch.from_numpy(datax[image_indx:image_indx+1]).float().cuda()).squeeze(0).detach().cpu().numpy()
+        image_arr=np.reshape(image_arr,(datay.shape[1],datay.shape[2],datay.shape[3],2))[0]
         ax[row_num][0].imshow(np.transpose(datax[image_indx], (1,2,0))[:,:,0])
-        ax[row_num][1].imshow(np.transpose(image_arr, (1,2,0))[:,:,0])
-        ax[row_num][2].imshow(image_arr.argmax(0))
+        ax[row_num][1].imshow(np.transpose(image_arr, (0,1,2,))[:,:,0])
+        ax[row_num][2].imshow(image_arr.argmax(2))
         ax[row_num][3].imshow(np.transpose(datay[image_indx], (1,2,0))[:,:,0])
     plt.show()
 
@@ -144,6 +139,7 @@ def main():
     if use_gpu:
         unet = unet.cuda()
     criterion = torch.nn.CrossEntropyLoss()
+
     optimizer = torch.optim.SGD(unet.parameters(), lr = 0.01, momentum=0.99)
     if sys.argv[1] == 'train':
         train(unet, batch_size, epochs, epoch_lapse, threshold, learning_rate, criterion, optimizer, x_train, y_train, x_val, y_val, width_out, height_out)
