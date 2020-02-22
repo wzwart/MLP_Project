@@ -10,7 +10,7 @@ def thresh(x):
     return (x!=0)*1
 
 
-class BOEDataset(Dataset):
+class DatasetBOE(Dataset):
     """optical coherence tomography images with diabetic macular edema dataset."""
 
     def __init__(self, root_dir, width_in,height_in, width_out, height_out , max_size= None ):

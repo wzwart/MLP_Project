@@ -25,9 +25,8 @@ import torch.utils.data as data
 from torchvision.datasets.utils import download_url, check_integrity
 from torchvision import transforms, utils
 
-from data_loader300W import YoutubeDataset
-from data_loader300W import Rescale, RandomCrop, Normalize,ToTensor
-
+from data_set_youtube import DatasetYoutube
+from data_set_youtube import Rescale, RandomCrop, Normalize,ToTensor
 
 
 
@@ -153,7 +152,7 @@ class DataProvider(object):
         return inputs_batch, targets_batch
 
 
-class YoutubeDataProvider(DataProvider):
+class DataProviderYoutube(DataProvider):
     """Data provider for Youtube"""
 
     def __init__(self, which_set='train',
@@ -193,14 +192,14 @@ class YoutubeDataProvider(DataProvider):
 
         internal_name={"train":"training","valid":"test","test":"test"}
 
-        transformed_dataset = YoutubeDataset(csv_file=os.path.join(filepath_to_data, '{0}_frames_keypoints.csv'.format(internal_name[which_set])),
+        transformed_dataset = DatasetYoutube(csv_file=os.path.join(filepath_to_data, '{0}_frames_keypoints.csv'.format(internal_name[which_set])),
                                              root_dir=os.path.join(filepath_to_data ,internal_name[which_set]),
                                              max_size= max_size,
                                              transform=data_transform)
 
         inputs, targets = transformed_dataset.get_data()
         # pass the loaded data to the parent class __init__
-        super(YoutubeDataProvider, self).__init__(
+        super(DataProviderYoutube, self).__init__(
             inputs, targets, batch_size, max_num_batches, shuffle_order, rng)
 
     def __len__(self):
@@ -208,11 +207,11 @@ class YoutubeDataProvider(DataProvider):
 
     def next(self):
         """Returns next data batch or raises `StopIteration` if at end."""
-        inputs_batch, targets_batch = super(YoutubeDataProvider, self).next()
+        inputs_batch, targets_batch = super(DataProviderYoutube, self).next()
         return inputs_batch, targets_batch
 
 
-class BOEDataProvider(DataProvider):
+class DataProviderBOE(DataProvider):
     """Data provider for 300W Faces."""
 
     def __init__(self, dataset, which_set='train',
@@ -241,7 +240,7 @@ class BOEDataProvider(DataProvider):
         self.data_set=dataset
         inputs, targets = self.data_set.get_data(self.which_set)
         # pass the loaded data to the parent class __init__
-        super(BOEDataProvider, self).__init__(
+        super(DataProviderBOE, self).__init__(
             inputs, targets, batch_size, max_num_batches, shuffle_order, rng)
 
     def __len__(self):
@@ -249,7 +248,7 @@ class BOEDataProvider(DataProvider):
 
     def next(self):
         """Returns next data batch or raises `StopIteration` if at end."""
-        inputs_batch, targets_batch = super(BOEDataProvider, self).next()
+        inputs_batch, targets_batch = super(DataProviderBOE, self).next()
         return inputs_batch, targets_batch
 
 

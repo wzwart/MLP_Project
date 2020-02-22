@@ -8,7 +8,7 @@ import pandas as pd
 import cv2
 
 
-class YoutubeDataset(Dataset):
+class DatasetYoutube(Dataset):
     """Face Landmarks dataset."""
 
     def __init__(self, csv_file, root_dir, max_size= None ,transform=None):
