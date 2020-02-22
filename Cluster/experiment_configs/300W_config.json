@@ -4,9 +4,6 @@
   "continue_from_epoch": -1,
   "seed": 0,
   "image_num_channels": 1,
-  "image_height": 28,
-  "image_width": 28,
-  "dim_reduction_type": "avg_pooling",
   "num_layers": 5,
   "num_filters": 32,
   "num_epochs": 1,
@@ -15,7 +12,6 @@
   "weight_decay_coefficient": 1e-05,
   "use_tqdm": false,
   "max_size": 40,
-
   "filepath_to_data_1": "/home/s2000253/mlpractical/data/300W",
   "filepath_to_data_2": "../Basic_Detector/data/300W"
 }
