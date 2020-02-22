@@ -1,16 +1,13 @@
 
-
-Logging into MLP:
-
-First connect to UoE over VPN
+#Logging into MLP:
+#First connect to UoE over VPN
 sshpass -p "w*wZ47Ws" ssh -o StrictHostKeyChecking=no -A s1999534@student.ssh.inf.ed.ac.uk
 ssh student.login
 ssh mlp1
-
 source .bashrc
 source activate mlp
 cd mlpractical
-cd /home/s1999534/mlpractical/cluster_experiment_scripts
+cd "/home/$USER/mlpractical/cluster_experiment_scripts"
 
 sbatch fld_standard_single_gpu.sh
 
