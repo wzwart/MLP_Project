@@ -196,7 +196,6 @@ class DataProviderYoutube(DataProvider):
                                              root_dir=os.path.join(filepath_to_data ,internal_name[which_set]),
                                              max_size= max_size,
                                              transform=data_transform)
-
         inputs, targets = transformed_dataset.get_data()
         # pass the loaded data to the parent class __init__
         super(DataProviderYoutube, self).__init__(
@@ -250,5 +249,8 @@ class DataProviderBOE(DataProvider):
         """Returns next data batch or raises `StopIteration` if at end."""
         inputs_batch, targets_batch = super(DataProviderBOE, self).next()
         return inputs_batch, targets_batch
+
+    def render(self,x,y,out,number_images):
+        self.data_set.render(x,y,out,number_images)
 
 

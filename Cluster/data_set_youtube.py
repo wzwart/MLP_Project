@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.image as mpimg
 import pandas as pd
 import cv2
-
+import matplotlib.pyplot as plt
 
 class DatasetYoutube(Dataset):
     """Face Landmarks dataset."""
@@ -54,6 +54,20 @@ class DatasetYoutube(Dataset):
         key_pts = keypoints.view((keypoints.size(0), -1))
         # convert variables to floats for regression loss
         return images.type(torch.FloatTensor), key_pts.type(torch.FloatTensor)
+
+
+    def render(self, x,y,out,number_images):
+        fig, ax = plt.subplots(nrows=number_images, ncols=3, figsize=(18, 3 * number_images))
+        for row_num in range(number_images):
+            x_img=x[row_num][0]
+            y_img = y[row_num][:,:,0]
+            ax[row_num][0].imshow(x_img)
+            ax[row_num][2].imshow(y_img)
+            if type(out)!=type(None):
+                out_img = out[row_num][:,:,0]
+                ax[row_num][1].imshow(out_img)
+        plt.show()
+
 
     
 # tranforms

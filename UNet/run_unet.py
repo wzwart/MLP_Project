@@ -109,18 +109,18 @@ def train(unet, batch_size, epochs, epoch_lapse, threshold, learning_rate, crite
     gc.collect()
 
 def plot_examples(unet, datax, datay, num_examples=3):
-    fig, ax = plt.subplots(nrows=3, ncols=4, figsize=(18,4*num_examples))
-    m = datax.shape[0]
-    for row_num in range(num_examples):
-        image_indx = np.random.randint(m)
+        fig, ax = plt.subplots(nrows=3, ncols=4, figsize=(18,4*num_examples))
+        m = datax.shape[0]
+        for row_num in range(num_examples):
+            image_indx = np.random.randint(m)
 
-        image_arr = unet(torch.from_numpy(datax[image_indx:image_indx+1]).float().cuda()).squeeze(0).detach().cpu().numpy()
-        image_arr=np.reshape(image_arr,(datay.shape[1],datay.shape[2],datay.shape[3],2))[0]
-        ax[row_num][0].imshow(np.transpose(datax[image_indx], (1,2,0))[:,:,0])
-        ax[row_num][1].imshow(np.transpose(image_arr, (0,1,2,))[:,:,0])
-        ax[row_num][2].imshow(image_arr.argmax(2))
-        ax[row_num][3].imshow(np.transpose(datay[image_indx], (1,2,0))[:,:,0])
-    plt.show()
+            image_arr = unet(torch.from_numpy(datax[image_indx:image_indx+1]).float().cuda()).squeeze(0).detach().cpu().numpy()
+            image_arr=np.reshape(image_arr,(datay.shape[1],datay.shape[2],datay.shape[3],2))[0]
+            ax[row_num][0].imshow(np.transpose(datax[image_indx], (1,2,0))[:,:,0])
+            ax[row_num][1].imshow(np.transpose(image_arr, (0,1,2,))[:,:,0])
+            ax[row_num][2].imshow(image_arr.argmax(2))
+            ax[row_num][3].imshow(np.transpose(datay[image_indx], (1,2,0))[:,:,0])
+        plt.show()
 
 def main():
     width_in = 284

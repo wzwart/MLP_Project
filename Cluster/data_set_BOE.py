@@ -5,6 +5,7 @@ import numpy as np
 import scipy.io
 from skimage.transform import resize
 from torch.utils.data import Dataset
+import matplotlib.pyplot as plt
 
 def thresh(x):
     return (x!=0)*1
@@ -52,7 +53,7 @@ class DatasetBOE(Dataset):
             x = []
             y = []
             i=0
-            data_indexes = [10, 15, 20, 25, 28, 30, 32, 35, 40, 45, 50]
+
             while i < m and (len(x) < self.max_size or self.max_size==-1):
                 path = subject_path[i]
                 mat = scipy.io.loadmat(path)
@@ -63,8 +64,8 @@ class DatasetBOE(Dataset):
                 fluid_array = np.transpose(fluid_tensor, (2, 0, 1))
                 fluid_array = thresh(fluid_array)
                 fluid_array = resize(fluid_array, (fluid_array.shape[0], self.width_out, self.height_out))
-                x += [img_array[idx] for idx in data_indexes]
-                y += [fluid_array[idx] for idx in data_indexes]
+                x += [img for img in img_array]
+                y += [fluid for fluid in fluid_array]
                 i+=1
 
             self.x= np.expand_dims(np.array(x), 1)
@@ -77,4 +78,17 @@ class DatasetBOE(Dataset):
     def get_data(self, which_set, for_plotting=False):
         x,y= self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
         return (x,y)
+
+    def render(self, x,y,out,number_images):
+        fig, ax = plt.subplots(nrows=number_images, ncols=3, figsize=(18, 3 * number_images))
+        for row_num in range(number_images):
+            x_img=x[row_num][0]
+            y_img = y[row_num][:,:,0]
+            ax[row_num][0].imshow(x_img)
+            ax[row_num][2].imshow(y_img)
+            if type(out)!=type(None):
+                out_img = out[row_num][:,:,0]
+                ax[row_num][1].imshow(out_img)
+        plt.show()
+
 

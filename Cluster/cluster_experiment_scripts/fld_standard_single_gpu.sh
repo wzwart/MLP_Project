@@ -33,4 +33,4 @@ export DATASET_DIR=${TMP}/datasets/
 
 source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
-python train_evaluate_facial_landmark_detection.py --filepath_to_arguments_json_file experiment_configs/fld_config.json
+python train_evaluate_fld.py --filepath_to_arguments_json_file experiment_configs/unet_300whm_config_cluster.json

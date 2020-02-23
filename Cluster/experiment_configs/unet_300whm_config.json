@@ -1,15 +1,18 @@
 {
   "dataset_name": "300WHM",
-  "batch_size": 1,
-  "continue_from_epoch": -1,
+  "batch_size": 5,
+  "continue_from_epoch": 19,
   "seed": 0,
-  "num_epochs": 1,
+  "num_epochs": 2,
   "experiment_name": "exp_300W",
-  "use_gpu": true,
-  "use_tqdm": false,
-  "max_size_dataset": 40,
-  "num_landmarks": 2,
-  "filepath_to_data_1": "/home/s2000253/mlpractical/data/300W",
+  "use_gpu": false,
+  "use_tqdm": true,
+  "max_size_dataset": -1,
+  "num_landmarks": 68,
+  "landmarks_collapsed": true,
+  "use_case": "render",
+  "no_images_to_render": 5,
+  "filepath_to_data_1": "/home/s1999534/mlpractical/data/300W",
   "filepath_to_data_2": "../Basic_Detector/data/300W"
 }
 

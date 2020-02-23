@@ -41,6 +41,9 @@ wget https://s3.amazonaws.com/video.udacity-data.com/topher/2018/May/5aea1b91_tr
 cd ..
 unzip -n Youtube/train-test-data.zip -d Youtube
 
+unzip -n 300-W/300W.zip -d 300-W
+
+
 
 
 
