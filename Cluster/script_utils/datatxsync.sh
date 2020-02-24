@@ -18,7 +18,8 @@ rsync -azv  -e"ssh -o StrictHostKeyChecking=no -A s1993340@student.ssh.inf.ed.ac
 echo "TX Sync Finished"
 fi
 if [ "$USER" == "andreu" ]; then
+source paths_pablo.sh
 echo "TX Sync in Progress"
-rsync -azv  -e"ssh -o StrictHostKeyChecking=no -A s2000253@student.ssh.inf.ed.ac.uk ssh"  /mnt/c/Users/Andreu/Documents/GitHub/MLP_Project/data s2000253@mlp1:mlpractical/MLP_Project
+rsync -azv  -e"ssh -o StrictHostKeyChecking=no -A s2000253@student.ssh.inf.ed.ac.uk ssh"  "$local_path"../data "$remote_path"
 echo "TX Sync Finished"
 fi

@@ -30,32 +30,7 @@ def resizeInput(image_file, landmarks, width, height):
 
     return resized, landmarks
 
-
-def bivariateGaussianProb(x, y, meanX, meanY, scale):
-    cov = np.eye(2) * 2.5 * (scale / 64)
-    x = np.array([x, y])
-    # x = xT.reshape((2,1))
-    mean = np.array([meanX, meanY])
-
-    diff = x - mean
-
-    const = 1 / (np.sqrt(np.square(2 * np.pi) * np.linalg.det(cov)))
-
-    exp = np.exp((-1 / 2) * np.dot(np.dot(diff, np.linalg.inv(cov)), diff.reshape((2, 1))))
-
-    return const * exp
-
-
-# Generate heatmap for keypoint (x,y)
-def generateHeatmap(x, y, width, height):
-    z = np.zeros((width, height))
-    for i in range(width):
-        for j in range(height):
-            z[i][j] = bivariateGaussianProb(i, j, x, y, max(width, height))
-
-    return z.T
-
-def generateHeatmap2(center_x, center_y, width, height):
+def generateHeatmap(center_x, center_y, width, height):
     x = np.arange( width)
     y = np.arange( height)
     xv, yv = np.meshgrid(x, y)
@@ -64,8 +39,8 @@ def generateHeatmap2(center_x, center_y, width, height):
 
 
 
-class Dataset300WHM(Dataset):
-    """Face Landmarks dataset."""
+class DatasetYoutubeHM(Dataset):
+    """Youtube faces dataset."""
 
     def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks, landmarks_collapsed=False,max_size= -1):
         """
@@ -101,22 +76,22 @@ class Dataset300WHM(Dataset):
     def create_dataset(self):
         import pickle
         if self.landmarks_collapsed:
-            pickle_path = os.path.join(self.input_path, f"pickle_300W_{self.max_size}_{self.num_landmarks}_col.p")
+            pickle_path = os.path.join(self.input_path, f"pickle_Youtube_{self.max_size}_{self.num_landmarks}_col.p")
         else:
-            pickle_path = os.path.join(self.input_path, f"pickle_300W_{self.max_size}_{self.num_landmarks}.p")
+            pickle_path = os.path.join(self.input_path, f"pickle_Youtube_{self.max_size}_{self.num_landmarks}.p")
         if os.path.exists(pickle_path):
             print("loading from pickle file")
             data = pickle.load(open(pickle_path, "rb"))
             (self.x, self.y) = data
         else:
-            path = os.path.join(self.input_path,"300W.csv")
+            path = os.path.join(self.input_path,"Youtube.csv")
             dataset = pd.read_csv(path)
 
             image_paths = dataset.iloc[:, 0].to_numpy()
             landmarks = dataset.iloc[:, 1:].to_numpy()
 
             for i in range(len(image_paths)):
-                image_paths[i] = os.path.join(self.input_path,"images/" + image_paths[i])
+                image_paths[i] = os.path.join(self.input_path,image_paths[i])
 
             x = []
             y = []
@@ -147,9 +122,9 @@ class Dataset300WHM(Dataset):
                         u = np.zeros((self.width_out, self.height_out, self.num_landmarks))
                     for j, (x_p, y_p) in enumerate(points[:self.num_landmarks]):
                         if self.landmarks_collapsed:
-                            u[:, :, 0] +=generateHeatmap2(x_p, y_p, self.width_out, self.height_out)
+                            u[:, :, 0] +=generateHeatmap(x_p, y_p, self.width_out, self.height_out)
                         else:
-                            u[:, :, j] = generateHeatmap2(x_p, y_p, self.width_out, self.height_out)
+                            u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out)
                     u=np.clip(u,0,1)
                     y.append(u)
             self.x= np.transpose(np.array(x),(0,3,1,2))

@@ -7,6 +7,7 @@ from experiment_builder import ExperimentBuilder
 from unet import UNet
 from basic_detector_net import BasicDetectorNetwork
 from data_set_300WHM import Dataset300WHM
+from data_set_YoutubeHM import DatasetYoutubeHM
 from data_set_BOE import DatasetBOE
 from data_set_youtube import DatasetYoutube
 
@@ -58,7 +59,7 @@ if args.dataset_name == 'Youtube':
     optimizer = torch.optim.Adam(params=net.parameters(), lr=0.001)
 
 
-elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM':
+elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM' or args.dataset_name == 'YoutubeHM':
     if os.path.isdir(args.filepath_to_data_1):
         filepath_to_data = args.filepath_to_data_1
 
@@ -74,7 +75,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM':
     try:
         max_size_dataset = int(args.max_size_dataset)
     except:
-        max_size_dataset = None
+        max_size_dataset = -1
         pass
 
     width_in = 284
@@ -89,6 +90,14 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM':
             max_size=max_size_dataset)
     elif args.dataset_name == '300WHM':
         dataset = Dataset300WHM(
+            root_dir=os.path.join(filepath_to_data),
+            width_in=width_in, height_in=height_in, width_out=width_out,
+            height_out=height_out,
+            num_landmarks=args.num_landmarks,
+            landmarks_collapsed=args.landmarks_collapsed,
+            max_size=max_size_dataset)
+    elif args.dataset_name == 'YoutubeHM':
+        dataset = DatasetYoutubeHM(
             root_dir=os.path.join(filepath_to_data),
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
