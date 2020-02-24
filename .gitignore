@@ -21,6 +21,7 @@ venv/
 Ignore/
 Cluster/__pycache__/
 Cluster/.idea/
+Cluster/script_utils/pw.sh
 UNet/__pycache__/
 UNet/.idea/
 Cluster/exp_basic/

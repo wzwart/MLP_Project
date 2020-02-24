@@ -20,6 +20,6 @@ fi
 if [ "$USER" == "andreu" ]; then
 source paths_pablo.sh
 echo "TX Sync in Progress"
-rsync -azv  -e"ssh -o StrictHostKeyChecking=no -A s2000253@student.ssh.inf.ed.ac.uk ssh"  "$local_path"../data "$remote_path"
+rsync -azv  -e"ssh -o StrictHostKeyChecking=no -A s2000253@student.ssh.inf.ed.ac.uk ssh"  "$local_data_path" "$remote_data_path"
 echo "TX Sync Finished"
 fi
