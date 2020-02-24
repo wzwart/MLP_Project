@@ -34,8 +34,11 @@ def generateHeatmap(center_x, center_y, width, height):
     x = np.arange( width)
     y = np.arange( height)
     xv, yv = np.meshgrid(x, y)
-    width_norm=0.01*np.sqrt(width*height)
-    return np.exp(-0.5*((xv-center_x)**2+(yv-center_y)**2)/(width_norm**2))
+    width_norm=0.15  *np.sqrt(width*height)
+    hm= np.exp(-0.5*((xv-center_x)**2+(yv-center_y)**2)/(width_norm**2))
+    # hm = hm - hm.mean(axis=(0, 1))
+    # but don't normalize variance
+    return hm
 
 
 
@@ -110,11 +113,20 @@ class DatasetYoutubeHM(Dataset):
                         break
                     # Resize the image to the input size
                     resized, points = resizeInput(image_path, landmarks[i], self.width_in, self.height_in)
+
+                    # normalize:
+                    resized = resized-resized.mean(axis=(0,1))
+                    resized = resized / np.sqrt(resized.var(axis=(0,1)))
+
                     x.append(resized)
 
                     # Scale the landmark coordinates to the output size
                     ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
                     points = np.around(points / ratio, decimals=3)
+                    # Get the heatmap for each landmark
+                    if self.num_landmarks==5:
+                        points=points[[37-1,40-1,43-1,46-1,34-1]]
+
                     # Get the heatmap for each landmark
                     if self.landmarks_collapsed:
                         u = np.zeros((self.width_out, self.height_out, 1))
@@ -137,14 +149,27 @@ class DatasetYoutubeHM(Dataset):
         return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
 
 
-    def render(self, x,y,out,number_images):
-        fig, ax = plt.subplots(nrows=number_images, ncols=3, figsize=(18, 3 * number_images))
+        def render(self, x,y,out,number_images):
+        from collections import OrderedDict
+        from matplotlib import cm
+
+        set1 = cm.get_cmap('Set1')
+        colors= np.asarray(set1.colors)
+        no_colors=colors.shape[0]
+        no_landmarks=y.shape[3]
+        if type(out) != type(None):
+            no_cols = 2+no_landmarks
+        else:
+            no_cols = 2
+        fig, ax = plt.subplots(nrows=number_images, ncols=no_cols, figsize=(18, 3 * number_images))
         for row_num in range(number_images):
             x_img=np.transpose(x[row_num],(1,2,0))
             y_img = y[row_num][:,:,0]
             ax[row_num][0].imshow(cv2.cvtColor(x_img, cv2.COLOR_BGR2RGB))
             ax[row_num][2].imshow(y_img)
             if type(out)!=type(None):
-                out_img = out[row_num][:,:,0]
-                ax[row_num][1].imshow(out_img)
+                for i in range(no_landmarks):
+                    out_img= (out[row_num] - out[row_num].min())
+                    out_img = np.array([out_img[:,:,i]*colors[i%no_colors,0], out_img[:,:,i]*colors[i%no_colors,1],out_img[:,:,i]*colors[i%no_colors,2]]).transpose((1,2,0))
+                    ax[row_num][i+1].imshow(out_img)
         plt.show()

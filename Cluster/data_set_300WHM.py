@@ -118,8 +118,6 @@ class Dataset300WHM(Dataset):
                     resized = resized-resized.mean(axis=(0,1))
                     resized = resized / np.sqrt(resized.var(axis=(0,1)))
 
-
-
                     x.append(resized)
 
                     # Scale the landmark coordinates to the output size
