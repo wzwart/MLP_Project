@@ -14,8 +14,8 @@ from torch.optim.adam import Adam
 from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
-    def __init__(self, network_model, experiment_name, num_epochs, train_data, val_data,
-                 test_data, weight_decay_coefficient, use_gpu, criterion, use_tqdm=True, continue_from_epoch=-1):
+    def __init__(self, network_model, experiment_name, num_epochs, data_provider,train_data, val_data,
+                 test_data, use_gpu, criterion, optimizer, use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -38,6 +38,8 @@ class ExperimentBuilder(nn.Module):
         self.device = torch.cuda.current_device()
         self.use_tqdm =use_tqdm
         self.criterion=criterion.to(self.device)
+        self.continue_from_epoch=continue_from_epoch
+        self.data_provider=data_provider
         print("number of available devicews" , torch.cuda.device_count())
         print("Use GPU" , use_gpu)
         try:
@@ -65,10 +67,8 @@ class ExperimentBuilder(nn.Module):
         self.val_data = val_data
         self.test_data = test_data
 
-        # self.optimizer = Adam(self.model.parameters(), amsgrad=False,
-        #                             weight_decay=weight_decay_coefficient)
 
-        self.optimizer = optim.Adam(params=self.model.parameters(), lr=0.001)
+        self.optimizer =optimizer
 
         print('System learnable parameters')
         num_conv_layers = 0
@@ -103,7 +103,7 @@ class ExperimentBuilder(nn.Module):
             os.mkdir(self.experiment_saved_models)  # create the experiment saved models directory
 
         self.num_epochs = num_epochs
-        if continue_from_epoch == -2:
+        if self.continue_from_epoch == -2:
             try:
                 self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
                     model_save_dir=self.experiment_saved_models, model_save_name="train_model",
@@ -115,10 +115,10 @@ class ExperimentBuilder(nn.Module):
                 self.starting_epoch = 0
                 self.state = dict()
 
-        elif continue_from_epoch != -1:  # if continue from epoch is not -1 then
+        elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
             self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
                 model_save_dir=self.experiment_saved_models, model_save_name="train_model",
-                model_idx=continue_from_epoch)  # reload existing model from epoch and return best val model index
+                model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
             # and the best val acc of that model
             self.starting_epoch = self.state['current_epoch_idx']
         else:
@@ -148,15 +148,21 @@ class ExperimentBuilder(nn.Module):
         #print(type(x))
 
         if type(x) is np.ndarray:
-            x, y = torch.Tensor(x).float().to(device=self.device), torch.Tensor(y).long().to(
-            device=self.device)  # send data to device as torch tensors
+            x= torch.Tensor(x).float().to(device=self.device)
+            y =torch.Tensor(y).float().to(device=self.device)  # send data to device as torch tensors
 
         x = x.to(self.device)
         y = y.to(self.device)
-
         out = self.model.forward(x)  # forward the data in the model
 
-        loss = self.criterion(out, y)
+        if str(self.criterion)=="CrossEntropyLoss()":
+            loss_in = out.reshape((out.shape[0] * out.shape[1] * out.shape[2], out.shape[3]))
+            loss_target = y.reshape((y.shape[0] * y.shape[1] * y.shape[2], y.shape[3]))[:, 0]
+        else:
+            loss_in=out
+            loss_target=y
+
+        loss = self.criterion(loss_in, loss_target)
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
@@ -178,15 +184,21 @@ class ExperimentBuilder(nn.Module):
         # if len(y.shape) > 1:
         #     y = np.argmax(y, axis=1)  # convert one hot encoded labels to single integer labels
         if type(x) is np.ndarray:
-            x, y = torch.Tensor(x).float().to(device=self.device), torch.Tensor(y).long().to(
-            device=self.device)  # convert data to pytorch tensors and send to the computation device
+            x = torch.Tensor(x).float().to(device=self.device)
+            y = torch.Tensor(y).float().to(device=self.device)  # convert data to pytorch tensors and send to the computation device
 
         x = x.to(self.device)
         y = y.to(self.device)
         out = self.model.forward(x)  # forward the data in the model
 
-        criterion = nn.MSELoss()
-        loss = criterion(out, y)
+        if str(self.criterion)=="CrossEntropyLoss()":
+            loss_in = out.reshape((out.shape[0] * out.shape[1] * out.shape[2], out.shape[3]))
+            loss_target = y.reshape((y.shape[0] * y.shape[1] * y.shape[2], y.shape[3]))[:, 0]
+        else:
+            loss_in=out
+            loss_target=y
+
+        loss = self.criterion(loss_in, loss_target)
 
         return loss.data.detach().cpu().numpy(), 3
 
@@ -217,11 +229,11 @@ class ExperimentBuilder(nn.Module):
                 current_epoch_losses["train_acc"].append(accuracy)  # add current iter acc to the train acc list
                 if self.use_tqdm:
                     pbar_train.update(1)
-                    pbar_train.set_description("Epoch {}: Train     loss: {:.4f}, accuracy: {:.4f}".format(epoch_idx,loss,  accuracy))
+                    pbar_train.set_description("Epoch {}: Train     loss: {}".format(epoch_idx,loss))
                 else:
                     running_loss += loss.item()
                     if idx % 10 == 9 and not self.use_tqdm:  # print every 10 batches
-                        print('Train epoch {}, Batch: {}, Avg. Loss: {}'.format(epoch_idx, idx + 1, running_loss / 1000))
+                        print('Train epoch {}, Batch: {}, Avg. Loss: {}'.format(epoch_idx, idx + 1, running_loss / 10))
                         running_loss = 0.0
         return current_epoch_losses
 
@@ -240,11 +252,11 @@ class ExperimentBuilder(nn.Module):
                 if self.use_tqdm:
                     pbar_val.update(1)  # add 1 step to the progress bar
                     pbar_val.set_description(
-                        "Epoch {}: Validate  loss: {:.4f}, accuracy: {:.4f}".format(epoch_idx, loss,   accuracy))
+                        "Epoch {}: Validate  loss: {}".format(epoch_idx, loss))
                 else:
                     running_loss += loss.item()
                     if idx % 10 == 9 and not self.use_tqdm:  # print every 10 batches
-                        print('Validate Epoch {}, Batch: {}, Avg. Loss: {}'.format(epoch_idx, idx + 1, running_loss / 1000))
+                        print('Validate Epoch {}, Batch: {}, Avg. Loss: {}'.format(epoch_idx, idx + 1, running_loss / 10))
                         running_loss = 0.0
 
         return current_epoch_losses
@@ -267,11 +279,11 @@ class ExperimentBuilder(nn.Module):
                 if self.use_tqdm:
                     pbar_test.update(1)  # update progress bar status
                     pbar_test.set_description(
-                        "Test: loss: {:.4f}, accuracy: {:.4f}".format(loss, accuracy))  # update progress bar string output
+                        "Test: loss: {}".format(loss))  # update progress bar string output
                 else:
                     running_loss += loss.item()
                     if idx % 10 == 9 and not self.use_tqdm:  # print every 10 batches
-                        print('Test Batch: {}, Avg. Loss: {}'.format(idx + 1, running_loss / 1000))
+                        print('Test Batch: {}, Avg. Loss: {}'.format(idx + 1, running_loss / 10))
                         running_loss = 0.0
         return current_epoch_losses
 
@@ -349,3 +361,54 @@ class ExperimentBuilder(nn.Module):
                         stats_dict=test_losses, current_epoch=0, continue_from_mode=False)
 
         return total_losses, test_losses
+
+    def render(self,data,number_images, x_y_only=False ):
+        '''
+        Loads the model and then class the render function of the data set
+
+        Args:
+            epoch: the epoch from which we load, -2 for the last one
+
+        Returns:
+
+        '''
+        if not x_y_only:
+            if self.continue_from_epoch == -2:
+                try:
+                    self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
+                        model_save_dir=self.experiment_saved_models, model_save_name="train_model",
+                        model_idx='latest')  # reload existing model from epoch and return best val model index
+                    # and the best val acc of that model
+                    self.starting_epoch = self.state['current_epoch_idx']
+                except:
+                    print("Model objects cannot be found, initializing a new model and starting from scratch")
+                    self.starting_epoch = 0
+                    self.state = dict()
+
+            elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
+                self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
+                    model_save_dir=self.experiment_saved_models, model_save_name="train_model",
+                    model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
+                # and the best val acc of that model
+                self.starting_epoch = self.state['current_epoch_idx']
+            else:
+                raise ValueError(f"Can not load from epoch {self.continue_from_epoch}")
+
+            self.model.eval()
+        for (x,y) in data: #is only executed once, data can only be accessed through an enumerator
+            if type(x) is np.ndarray:
+
+                x_net =  torch.Tensor(x).float()[:number_images].to(device=self.device)
+                x_img = x[:number_images].copy()
+                y_img = y[:number_images].copy()
+            else:
+                x_net=x.copy()
+                x_img=x.detach().cpu().numpy()
+                y_img=y.detach().cpu().numpy()
+            if  x_y_only:
+                out=None
+            else:
+                out = self.model.forward(x_net).detach().cpu().numpy()  # forward the data in the model
+            break
+        self.data_provider.render(x=x_img,y=y_img,out=out,number_images=number_images)
+

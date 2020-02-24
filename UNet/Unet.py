@@ -97,4 +97,5 @@ class UNet(nn.Module):
         cat_layer1 = self.conv_decode2(decode_block2)
         decode_block1 = self.crop_and_concat(cat_layer1, encode_block1, crop=True)
         final_layer = self.final_layer(decode_block1)
-        return  final_layer
+        outputs = final_layer.permute(0, 2, 3, 1)
+        return  outputs

@@ -9,7 +9,7 @@ cd "$local_path"
 if [ "$USER" == "wwzwart" ]; then
 source paths_wz.sh
 echo "TX Sync in Progress"
-echo "$local_pw" | sudo -S rsync -azv   -e"sshpass -p "$remote_pw" ssh -o StrictHostKeyChecking=no -A "$remote_user" ssh" /mnt/c/Data Science/Machine Learning Practical, MLP/MLP_Project/data "$remote_path"
+echo "$local_pw" | sudo -S rsync -azv   -e"sshpass -p "$remote_pw" ssh -o StrictHostKeyChecking=no -A "$remote_user" ssh" "$local_path"../data "$remote_path"
 echo "TX Sync Finished"
 fi
 if [ "$USER" == "jangomezroberts" ]; then

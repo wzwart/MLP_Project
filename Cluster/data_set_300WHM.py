@@ -1,10 +1,14 @@
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-import os
+import os, sys
 import numpy as np
+import tqdm
 import scipy.io
 from skimage.transform import resize
 from torch.utils.data import Dataset
+import cv2
+import matplotlib.pyplot as plt
+import matplotlib.image as mpim
 
 def thresh(x):
     return (x!=0)*1
@@ -51,11 +55,19 @@ def generateHeatmap(x, y, width, height):
 
     return z.T
 
+def generateHeatmap2(center_x, center_y, width, height):
+    x = np.arange( width)
+    y = np.arange( height)
+    xv, yv = np.meshgrid(x, y)
+    width_norm=0.01*np.sqrt(width*height)
+    return np.exp(-0.5*((xv-center_x)**2+(yv-center_y)**2)/(width_norm**2))
+
+
 
 class Dataset300WHM(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks, max_size= None):
+    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks, landmarks_collapsed=False,max_size= None):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -74,6 +86,7 @@ class Dataset300WHM(Dataset):
         self.width_out=width_out
         self.height_out=height_out
         self.num_landmarks=num_landmarks
+        self.landmarks_collapsed=landmarks_collapsed
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
         self.create_dataset()
 
@@ -83,7 +96,10 @@ class Dataset300WHM(Dataset):
 
     def create_dataset(self):
         import pickle
-        pickle_path = os.path.join(self.input_path, f"pickle_300W_{self.max_size}.p")
+        if self.landmarks_collapsed:
+            pickle_path = os.path.join(self.input_path, f"pickle_300W_{self.max_size}_{self.num_landmarks}_col.p")
+        else:
+            pickle_path = os.path.join(self.input_path, f"pickle_300W_{self.max_size}_{self.num_landmarks}.p")
         if os.path.exists(pickle_path):
             print("loading from pickle file")
             data = pickle.load(open(pickle_path, "rb"))
@@ -100,33 +116,56 @@ class Dataset300WHM(Dataset):
 
             x = []
             y = []
+            if self.max_size==-1:
+                number_of_images = len(image_paths)
+            else:
+                number_of_images = min(len(image_paths),self.max_size)
+            with tqdm.tqdm(total=number_of_images , file=sys.stdout) as pbar_test:  # ini a progress bar
+                for i, image_path in enumerate(image_paths):
 
-            for i, image_path in enumerate(image_paths):
-                if (self.max_size != -1 and len(x) >= self.max_size):
-                    break
-                # Resize the image to the input size
-                resized, points = resizeInput(image_path, landmarks[i], self.width_in, self.height_in)
-                x.append(resized)
+                    pbar_test.set_description(
+                        "Generate Images")  # update progress bar string output
+                    pbar_test.update(1)  # update progress bar status
 
-                # Scale the landmark coordinates to the output size
-                ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
-                points = np.around(points / ratio, decimals=3)
+                    if (self.max_size != -1 and len(x) >= self.max_size):
+                        break
+                    # Resize the image to the input size
+                    resized, points = resizeInput(image_path, landmarks[i], self.width_in, self.height_in)
+                    x.append(resized)
 
-                # Get the heatmap for each landmark
-                u = np.zeros((self.width_out, self.height_out, self.num_landmarks))
-                for j, (x_p, y_p) in enumerate(points[:self.num_landmarks]):
-                    u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out)
-
-                y.append(u)
-            self.x= np.array(x)
+                    # Scale the landmark coordinates to the output size
+                    ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
+                    points = np.around(points / ratio, decimals=3)
+                    # Get the heatmap for each landmark
+                    if self.landmarks_collapsed:
+                        u = np.zeros((self.width_out, self.height_out, 1))
+                    else:
+                        u = np.zeros((self.width_out, self.height_out, self.num_landmarks))
+                    for j, (x_p, y_p) in enumerate(points[:self.num_landmarks]):
+                        if self.landmarks_collapsed:
+                            u[:, :, 0] +=generateHeatmap2(x_p, y_p, self.width_out, self.height_out)
+                        else:
+                            u[:, :, j] = generateHeatmap2(x_p, y_p, self.width_out, self.height_out)
+                    u=np.clip(u,0,1)
+                    y.append(u)
+            self.x= np.transpose(np.array(x),(0,3,1,2))
             self.y= np.array(y)
             data =(self.x, self.y)
             pickle.dump(data, open(pickle_path, "wb"))
         self.length=len(self.x)
 
-
-
     def get_data(self, which_set):
         return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
 
 
+    def render(self, x,y,out,number_images):
+        fig, ax = plt.subplots(nrows=number_images, ncols=3, figsize=(18, 3 * number_images))
+        for row_num in range(number_images):
+            x_img=np.transpose(x[row_num],(1,2,0))
+            y_img = y[row_num][:,:,0]
+            ax[row_num][0].imshow(cv2.cvtColor(x_img, cv2.COLOR_BGR2RGB))
+            ax[row_num][2].imshow(y_img)
+            if type(out)!=type(None):
+                out_img = out[row_num][:,:,0]
+                ax[row_num][1].imshow(out_img)
+        plt.show()
