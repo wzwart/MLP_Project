@@ -408,7 +408,21 @@ class ExperimentBuilder(nn.Module):
             if  x_y_only:
                 out=None
             else:
-                out = self.model.forward(x_net).detach().cpu().numpy()  # forward the data in the model
+                out = self.model.forward(x_net) # forward the data in the model
+
+                if str(self.criterion) == "CrossEntropyLoss()":
+                    loss_in = out.reshape((out.shape[0] * out.shape[1] * out.shape[2], out.shape[3]))
+                    loss_target = y.reshape((y.shape[0] * y.shape[1] * y.shape[2], y.shape[3]))[:, 0]
+                else:
+                    loss_in = out
+                    loss_target = y
+
+                loss = self.criterion(torch.Tensor(loss_in).float().to(device=self.device), torch.Tensor(loss_target).float().to(device=self.device))
+                print(loss)
+                out = out.detach().cpu().numpy()  # forward the data in the model
+
+
+
             break
         self.data_provider.render(x=x_img,y=y_img,out=out,number_images=number_images)
 
