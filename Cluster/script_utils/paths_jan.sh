@@ -1,5 +1,5 @@
 echo "Setting The Paths"
 local_path="/Users/jangomezroberts/PycharmProjects/MLP_Project/"
 remote_path="s1993340@mlp1:mlpractical/"
-local_data_path="/Users/jangomezroberts/MLP_Project/data"
+local_data_path="/Users/jangomezroberts/PycharmProjects/MLP_Project/data"
 remote_data_path="s1993340@mlp1:mlpractical/"
