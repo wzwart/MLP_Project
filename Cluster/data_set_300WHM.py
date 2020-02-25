@@ -175,11 +175,16 @@ class Dataset300WHM(Dataset):
 
             x_img = x_img[:, :, [2, 1, 0]]# RGB BGR conversion
 
+            bw_image = 0.3 * np.array([np.mean(x_img, axis=2), np.mean(x_img, axis=2), np.mean(x_img, axis=2)]).transpose((1, 2, 0))
             ax[row_num][0].imshow(x_img)
-            ax[row_num][no_cols-1].imshow(y_img)
+            ax[row_num][0].axis('off')
+            ax[row_num][no_cols-1].imshow(y_img+bw_image)
+            ax[row_num][no_cols-1].axis('off')
             if type(out)!=type(None):
                 for i in range(no_landmarks):
                     out_img= (out[row_num] - out[row_num].min())
                     out_img = np.array([out_img[:,:,i]*colors[i%no_colors,0], out_img[:,:,i]*colors[i%no_colors,1],out_img[:,:,i]*colors[i%no_colors,2]]).transpose((1,2,0))
-                    ax[row_num][i+1].imshow(out_img)
+                    ax[row_num][i+1].imshow(out_img+bw_image)
+                    ax[row_num][i+1].axis('off')
+            #plt.tight_layout()
         plt.show()

@@ -146,6 +146,6 @@ conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     )  # build an experiment object
 
 if args.use_case == "render":
-    conv_experiment.render(data=test_data, number_images=args.no_images_to_render, x_y_only=False)
+    conv_experiment.render(data=train_data, number_images=args.no_images_to_render, x_y_only=False)
 else:
     experiment_metrics, test_metrics = conv_experiment.run_experiment()  # run experiment and return experiment metrics
