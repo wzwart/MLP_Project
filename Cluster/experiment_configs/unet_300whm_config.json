@@ -1,7 +1,7 @@
 {
   "dataset_name": "300WHM",
   "batch_size": 5,
-  "continue_from_epoch": 29,
+  "continue_from_epoch": 27,
 
   "seed": 0,
   "num_epochs": 2,
