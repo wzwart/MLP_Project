@@ -149,7 +149,7 @@ class DatasetYoutubeHM(Dataset):
         return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
 
 
-        def render(self, x,y,out,number_images):
+    def render(self, x,y,out,number_images):
         from collections import OrderedDict
         from matplotlib import cm
 
