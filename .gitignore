@@ -30,6 +30,7 @@ UNet/.idea/
 Cluster/exp_basic/
 Cluster/exp_300W/
 Cluster/exp_300W_5/
+Cluster/exp_*/
 Cluster/exp_unet/
 *.out
 log.log

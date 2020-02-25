@@ -36,7 +36,7 @@ def generateHeatmap(center_x, center_y, width, height):
     x = np.arange( width)
     y = np.arange( height)
     xv, yv = np.meshgrid(x, y)
-    width_norm=0.25  *np.sqrt(width*height)
+    width_norm=0.07  *np.sqrt(width*height)
     hm= np.exp(-0.5*((xv-center_x)**2+(yv-center_y)**2)/(width_norm**2))
     # hm = hm - hm.mean(axis=(0, 1))
     # but don't normalize variance

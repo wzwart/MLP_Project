@@ -5,6 +5,7 @@ from arg_extractor import get_args
 from data_augmentations import Cutout
 from experiment_builder import ExperimentBuilder
 from unet import UNet
+from unet_shallow import UNet_shallow
 from basic_detector_net import BasicDetectorNetwork
 from data_set_300WHM import Dataset300WHM
 from data_set_YoutubeHM import DatasetYoutubeHM
@@ -78,10 +79,10 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM' or args.dataset
         max_size_dataset = -1
         pass
 
-    width_in = 284
-    height_in = 284
-    width_out = 196
-    height_out = 196
+    width_in = 128
+    height_in = 128
+    width_out = 128
+    height_out = 128
     if args.dataset_name == 'BOE':
         dataset = DatasetBOE(
             root_dir=os.path.join(filepath_to_data),
@@ -122,9 +123,9 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM' or args.dataset
         criterion = torch.nn.CrossEntropyLoss()
     else:
         if args.landmarks_collapsed:
-            net = UNet(in_channel=3, out_channel=1)
+            net = UNet_shallow(in_channel=3, out_channel=1)
         else:
-            net = UNet(in_channel=3, out_channel=args.num_landmarks)
+            net = UNet_shallow(in_channel=3, out_channel=args.num_landmarks)
         criterion = torch.nn.MSELoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.99)
 
