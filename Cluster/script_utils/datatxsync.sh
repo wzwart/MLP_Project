@@ -2,7 +2,7 @@
 
 #TXSYNC:
 source pw.sh
-source exclude.sh
+#source exclude.sh
 echo "You are $USER"
 echo "Local Path $local_path"
 cd "$local_path"
