@@ -31,11 +31,11 @@ def resizeInput(image_file, landmarks, width, height):
     return resized, landmarks
 
 def generateHeatmap(center_x, center_y, width, height):
-    x = np.arange( width)
-    y = np.arange( height)
+    x = np.arange(width)
+    y = np.arange(height)
     xv, yv = np.meshgrid(x, y)
-    width_norm=0.15  *np.sqrt(width*height)
-    hm= np.exp(-0.5*((xv-center_x)**2+(yv-center_y)**2)/(width_norm**2))
+    width_norm = 0.07 * np.sqrt(width * height)
+    hm = np.exp(-0.5 * ((xv - center_x) ** 2 + (yv - center_y) ** 2) / (width_norm ** 2))
     # hm = hm - hm.mean(axis=(0, 1))
     # but don't normalize variance
     return hm
@@ -148,28 +148,42 @@ class DatasetYoutubeHM(Dataset):
     def get_data(self, which_set):
         return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
 
-
-    def render(self, x,y,out,number_images):
+    def render(self, x, y, out, number_images):
         from collections import OrderedDict
         from matplotlib import cm
 
         set1 = cm.get_cmap('Set1')
-        colors= np.asarray(set1.colors)
-        no_colors=colors.shape[0]
-        no_landmarks=y.shape[3]
+        colors = np.asarray(set1.colors)
+        no_colors = colors.shape[0]
+        no_landmarks = y.shape[3]
         if type(out) != type(None):
-            no_cols = 2+no_landmarks
+            no_cols = 2 + no_landmarks
         else:
             no_cols = 2
         fig, ax = plt.subplots(nrows=number_images, ncols=no_cols, figsize=(18, 3 * number_images))
         for row_num in range(number_images):
-            x_img=np.transpose(x[row_num],(1,2,0))
-            y_img = y[row_num][:,:,0]
-            ax[row_num][0].imshow(cv2.cvtColor(x_img, cv2.COLOR_BGR2RGB))
-            ax[row_num][2].imshow(y_img)
-            if type(out)!=type(None):
+            x_img = np.transpose(x[row_num], (1, 2, 0))
+
+            x_img = x_img - np.min(x_img, axis=(0, 1))
+            x_img = x_img / np.max(x_img, axis=(0, 1))
+
+            y_img = np.array([np.array(
+                [y[row_num, :, :, i] * colors[i % no_colors, 0], y[row_num, :, :, i] * colors[i % no_colors, 1],
+                 y[row_num, :, :, i] * colors[i % no_colors, 2]]) for i in range(no_landmarks)])
+            y_img = np.sum(y_img, axis=0).transpose((1, 2, 0))
+
+            y_img = y_img - np.min(y_img, axis=(0, 1))
+            # y_img=y_img/np.max(y_img, axis=(0,1))
+
+            x_img = x_img[:, :, [2, 1, 0]]  # RGB BGR conversion
+
+            ax[row_num][0].imshow(x_img)
+            ax[row_num][no_cols - 1].imshow(y_img)
+            if type(out) != type(None):
                 for i in range(no_landmarks):
-                    out_img= (out[row_num] - out[row_num].min())
-                    out_img = np.array([out_img[:,:,i]*colors[i%no_colors,0], out_img[:,:,i]*colors[i%no_colors,1],out_img[:,:,i]*colors[i%no_colors,2]]).transpose((1,2,0))
-                    ax[row_num][i+1].imshow(out_img)
+                    out_img = (out[row_num] - out[row_num].min())
+                    out_img = np.array(
+                        [out_img[:, :, i] * colors[i % no_colors, 0], out_img[:, :, i] * colors[i % no_colors, 1],
+                         out_img[:, :, i] * colors[i % no_colors, 2]]).transpose((1, 2, 0))
+                    ax[row_num][i + 1].imshow(out_img)
         plt.show()
