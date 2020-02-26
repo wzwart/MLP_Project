@@ -9,6 +9,7 @@ from unet_shallow import UNet_shallow
 from basic_detector_net import BasicDetectorNetwork
 from data_set_300WHM import Dataset300WHM
 from data_set_YoutubeHM import DatasetYoutubeHM
+from data_set_300_YT import Dataset_300W_YT
 from data_set_BOE import DatasetBOE
 from data_set_youtube import DatasetYoutube
 
@@ -60,7 +61,7 @@ if args.dataset_name == 'Youtube':
     optimizer = torch.optim.Adam(params=net.parameters(), lr=0.001)
 
 
-elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM' or args.dataset_name == 'YoutubeHM':
+elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset_name == 'Both':
     if os.path.isdir(args.filepath_to_data_1):
         filepath_to_data = args.filepath_to_data_1
 
@@ -89,20 +90,31 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300WHM' or args.dataset
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             max_size=max_size_dataset)
-    elif args.dataset_name == '300WHM':
-        dataset = Dataset300WHM(
+    elif args.dataset_name == '300W':
+        dataset = Dataset_300W_YT(
             root_dir=os.path.join(filepath_to_data),
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
+            which_dataset=0,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
-    elif args.dataset_name == 'YoutubeHM':
-        dataset = DatasetYoutubeHM(
+    elif args.dataset_name == 'Youtube':
+        dataset = Dataset_300W_YT(
             root_dir=os.path.join(filepath_to_data),
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
+            which_dataset=1,
+            landmarks_collapsed=args.landmarks_collapsed,
+            max_size=max_size_dataset)
+    elif args.dataset_name == 'Both':
+        dataset = Dataset_300W_YT(
+            root_dir=os.path.join(filepath_to_data),
+            width_in=width_in, height_in=height_in, width_out=width_out,
+            height_out=height_out,
+            num_landmarks=args.num_landmarks,
+            which_dataset=2,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
     else:
@@ -146,6 +158,6 @@ conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     )  # build an experiment object
 
 if args.use_case == "render":
-    conv_experiment.render(data=train_data, number_images=args.no_images_to_render, x_y_only=False)
+    conv_experiment.render(data=test_data, number_images=args.no_images_to_render, x_y_only=False)
 else:
     experiment_metrics, test_metrics = conv_experiment.run_experiment()  # run experiment and return experiment metrics
