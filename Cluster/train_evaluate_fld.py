@@ -101,6 +101,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
+            blob_width=args.rbf_width,
             which_dataset=0,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
@@ -110,6 +111,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
+            blob_width=args.rbf_width,
             which_dataset=1,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
@@ -119,6 +121,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
+            blob_width=args.rbf_width,
             which_dataset=2,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)

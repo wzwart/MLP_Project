@@ -32,11 +32,11 @@ def resizeInput(image_file, landmarks, width, height):
 
 
 
-def generateHeatmap(center_x, center_y, width, height):
+def generateHeatmap(center_x, center_y, width, height,rbf_width):
     x = np.arange( width)
     y = np.arange( height)
     xv, yv = np.meshgrid(x, y)
-    width_norm=0.07  *np.sqrt(width*height)
+    width_norm=rbf_width  *np.sqrt(width*height)
     hm= np.exp(-0.5*((xv-center_x)**2+(yv-center_y)**2)/(width_norm**2))
     # hm = hm - hm.mean(axis=(0, 1))
     # but don't normalize variance
@@ -46,7 +46,7 @@ def generateHeatmap(center_x, center_y, width, height):
 class Dataset300WHM(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks, landmarks_collapsed=False,max_size= -1):
+    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,blob_width, landmarks_collapsed=False,max_size= -1):
         """
         Args:
             root_dir: Directory where the CSV is stored.
@@ -55,6 +55,7 @@ class Dataset300WHM(Dataset):
             width_out: Width of the output heatmap.
             height_out: Height of the output heatmap.
             num_landmarks: Number of landmarks to do the heatmap for.
+            blob_width:width of the blob
             landmarks_collapsed: Boolean indicating if all the landmarks should be collapsed to one heatmap.
             max_size: Number of images to consider. If -1, consider all.
         """
@@ -69,6 +70,7 @@ class Dataset300WHM(Dataset):
         self.width_out=width_out
         self.height_out=height_out
         self.num_landmarks=num_landmarks
+        self.blob_width = blob_width
         self.landmarks_collapsed=landmarks_collapsed
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
         self.create_dataset()
@@ -133,9 +135,9 @@ class Dataset300WHM(Dataset):
                         u = np.zeros((self.width_out, self.height_out, self.num_landmarks))
                     for j, (x_p, y_p) in enumerate(points[:self.num_landmarks]):
                         if self.landmarks_collapsed:
-                            u[:, :, 0] +=generateHeatmap(x_p, y_p, self.width_out, self.height_out)
+                            u[:, :, 0] +=generateHeatmap(x_p, y_p, self.width_out, self.height_out,self.blob_width)
                         else:
-                            u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out)
+                            u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out,self.blob_width)
                     u=np.clip(u,0,1)
                     y.append(u)
             self.x= np.transpose(np.array(x),(0,3,1,2))

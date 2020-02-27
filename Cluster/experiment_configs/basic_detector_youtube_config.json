@@ -10,6 +10,7 @@
   "use_tqdm": false,
   "max_size_dataset": 50,
   "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data",
-  "filepath_to_data_2": "../Basic_Detector/data/Youtube"
+  "filepath_to_data_2": "../Basic_Detector/data/Youtube",
+  "rbf_width": 0.07
 }
 
