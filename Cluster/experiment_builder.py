@@ -8,6 +8,7 @@ import tqdm
 import os
 import numpy as np
 import time
+from matplotlib import cm
 
 from torch.optim.adam import Adam
 
@@ -91,7 +92,7 @@ class ExperimentBuilder(nn.Module):
         print(self.experiment_folder, self.experiment_logs)
         # Set best models to be at 0 since we are just starting
         self.best_val_model_idx = 0
-        self.best_val_model_acc = 0.
+        self.best_val_model_loss = 1000000
 
         if not os.path.exists(self.experiment_folder):  # If experiment directory does not exist
             os.mkdir(self.experiment_folder)  # create the experiment directory
@@ -105,7 +106,7 @@ class ExperimentBuilder(nn.Module):
         self.num_epochs = num_epochs
         if self.continue_from_epoch == -2:
             try:
-                self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
+                self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
                     model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                     model_idx='latest')  # reload existing model from epoch and return best val model index
                 # and the best val acc of that model
@@ -116,11 +117,12 @@ class ExperimentBuilder(nn.Module):
                 self.state = dict()
 
         elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
-            self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
+            self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
                 model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                 model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
             # and the best val acc of that model
             self.starting_epoch = self.state['current_epoch_idx']
+            print("WOw {}".format(self.best_val_model_idx))
         else:
             self.starting_epoch = 0
             self.state = dict()
@@ -132,7 +134,78 @@ class ExperimentBuilder(nn.Module):
 
         return total_num_params
 
-    def run_train_iter(self, x, y):
+    def generateHeatmap(self, center_x, center_y, width, height):
+        x = np.arange(width)
+        y = np.arange(height)
+        xv, yv = np.meshgrid(x, y)
+        width_norm = 0.07 * np.sqrt(width * height)
+        hm = np.exp(-0.5 * ((xv - center_x) ** 2 + (yv - center_y) ** 2) / (width_norm ** 2))
+        # hm = hm - hm.mean(axis=(0, 1))
+        # but don't normalize variance
+        return hm
+
+    def NME(self, true, predicted):
+
+        bbox = np.max(true, axis=0) - np.min(true, axis=0)
+        d = np.sqrt(bbox[0]*bbox[1])
+        return np.sum(np.square(true-predicted))/d
+
+    def compute_nme(self, out, p):
+
+        set1 = cm.get_cmap('Set1')
+        colors = np.asarray(set1.colors)
+        no_colors = colors.shape[0]
+        no_landmarks = out.shape[3]
+
+        nme = 0
+        count = 0
+        height_out = out.shape[1]
+        width_out = out.shape[2]
+        n_images = out.shape[0]
+        u = np.zeros((width_out, height_out, 3))
+        u[:, :, 0] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
+        u[:, :, 1] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
+        u[:, :, 2] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
+
+        u = np.clip(u, 0, 1)
+
+        u = np.array([u.transpose((2, 0, 1))])
+        u = torch.Tensor(u).float().to(self.device)
+        for row_num in range(n_images):
+            if type(out) != type(None):
+                predicted = np.array([])
+                p_img = p[row_num]
+                for i in range(no_landmarks):
+                    out_img = (out[row_num] - out[row_num].min())
+                    #print(out_img.shape)
+                    t = torch.Tensor(3, out_img.shape[0], out_img.shape[1])
+                    t[0] = out_img[:, :, i] * colors[i % no_colors, 0]
+                    t[1] = out_img[:, :, i] * colors[i % no_colors, 1]
+                    t[2] = out_img[:, :, i] * colors[i % no_colors, 2]
+                    t = t.permute((1, 2, 0))
+
+                    out_conv = t.permute((2, 0, 1)).unsqueeze(0)
+                    out_conv = out_conv.to(self.device)
+                    padded_tensor = F.pad(out_conv, (
+                        int(height_out / 2), int(height_out / 2) - 1, int(width_out / 2),
+                        int(width_out / 2) - 1))
+                    cross_corr = F.conv2d(padded_tensor, u, padding=0)
+
+                    argmax = torch.argmax(cross_corr)
+
+                    index_i, index_j = np.unravel_index(argmax.detach().cpu(),
+                                                        (out_img.shape[0],out_img.shape[1]))
+                    if (i == 0):
+                        predicted = np.hstack((predicted, np.array([index_j, index_i])))
+                    else:
+                        predicted = np.vstack((predicted, np.array([index_j, index_i])))
+
+                nme += self.NME(p_img, predicted)
+                count += 1
+
+        return nme/count
+
+    def run_train_iter(self, x, y, p):
         """
         Receives the inputs and targets for the model and runs a training iteration. Returns loss and accuracy metrics.
         :param x: The inputs to the model. A numpy array of shape batch_size, channels, height, width
@@ -171,9 +244,11 @@ class ExperimentBuilder(nn.Module):
         # _, predicted = torch.max(out.data, 1)  # get argmax of predictions
         #
         # accuracy = np.mean(list(predicted.eq(y.data).cpu()))  # compute accuracy
+        #nme = self.compute_nme(out, p)
+
         return loss.data.detach().cpu().numpy(), 3
 
-    def run_evaluation_iter(self, x, y):
+    def run_evaluation_iter(self, x, y, p):
         """
         Receives the inputs and targets for the model and runs an evaluation iterations. Returns loss and accuracy metrics.
         :param x: The inputs to the model. A numpy array of shape batch_size, channels, height, width
@@ -200,7 +275,9 @@ class ExperimentBuilder(nn.Module):
 
         loss = self.criterion(loss_in, loss_target)
 
-        return loss.data.detach().cpu().numpy(), 3
+        nme = self.compute_nme(out, p)
+
+        return loss.data.detach().cpu().numpy(), nme
 
     def save_model(self, model_save_dir, model_save_name, model_idx, state):
         """
@@ -223,10 +300,10 @@ class ExperimentBuilder(nn.Module):
             f = sys.stdout
         with tqdm.tqdm(total=len(self.train_data), file=f) as pbar_train:  # create a progress bar for training
             running_loss=0
-            for idx, (x,y)  in enumerate(self.train_data):  # get data batches
-                loss, accuracy = self.run_train_iter(x=x, y=y)  # take a training iter step
+            for idx, (x,y,p)  in enumerate(self.train_data):  # get data batches
+                loss, accuracy = self.run_train_iter(x=x, y=y, p=p)  # take a training iter step
                 current_epoch_losses["train_loss"].append(loss)  # add current iter loss to the train loss list
-                current_epoch_losses["train_acc"].append(accuracy)  # add current iter acc to the train acc list
+                current_epoch_losses["train_nme"].append(accuracy)  # add current iter acc to the train acc list
                 if self.use_tqdm:
                     pbar_train.update(1)
                     pbar_train.set_description("Epoch {}: Train     loss: {}".format(epoch_idx,loss))
@@ -244,11 +321,11 @@ class ExperimentBuilder(nn.Module):
             f = sys.stdout
         running_loss = 0
         with tqdm.tqdm(total=len(self.val_data), file=f) as pbar_val:  # create a progress bar for validation
-            for idx, (x, y) in enumerate(self.val_data):  # get data batches
+            for idx, (x, y, p) in enumerate(self.val_data):  # get data batches
 
-                loss, accuracy = self.run_evaluation_iter(x=x, y=y)  # run a validation iter
+                loss, accuracy = self.run_evaluation_iter(x=x, y=y, p=p)  # run a validation iter
                 current_epoch_losses["val_loss"].append(loss)  # add current iter loss to val loss list.
-                current_epoch_losses["val_acc"].append(accuracy)  # add current iter acc to val acc lst.
+                current_epoch_losses["val_nme"].append(accuracy)  # add current iter acc to val acc lst.
                 if self.use_tqdm:
                     pbar_val.update(1)  # add 1 step to the progress bar
                     pbar_val.set_description(
@@ -270,12 +347,12 @@ class ExperimentBuilder(nn.Module):
         running_loss = 0
 
         with tqdm.tqdm(total=len(self.test_data), file=f) as pbar_test:  # ini a progress bar
-            for idx, (x, y) in enumerate(self.test_data):  # sample batch
+            for idx, (x, y, p) in enumerate(self.test_data):  # sample batch
 
                 loss, accuracy = self.run_evaluation_iter(x=x,
-                                                          y=y)  # compute loss and accuracy by running an evaluation step
+                                                          y=y, p=p)  # compute loss and accuracy by running an evaluation step
                 current_epoch_losses["test_loss"].append(loss)  # save test loss
-                current_epoch_losses["test_acc"].append(accuracy)  # save test accuracy
+                current_epoch_losses["test_nme"].append(accuracy)  # save test accuracy
                 if self.use_tqdm:
                     pbar_test.update(1)  # update progress bar status
                     pbar_test.set_description(
@@ -304,17 +381,17 @@ class ExperimentBuilder(nn.Module):
         Runs experiment train and evaluation iterations, saving the model and best val model and val model accuracy after each epoch
         :return: The summary current_epoch_losses from starting epoch to total_epochs.
         """
-        total_losses = {"train_acc": [], "train_loss": [], "val_acc": [],
+        total_losses = {"train_nme": [], "train_loss": [], "val_nme": [],
                         "val_loss": [], "curr_epoch": []}  # initialize a dict to keep the per-epoch metrics
         for i, epoch_idx in enumerate(range(self.starting_epoch, self.num_epochs)):
 
             epoch_start_time = time.time()
-            current_epoch_losses = {"train_acc": [], "train_loss": [], "val_acc": [], "val_loss": []}
+            current_epoch_losses = {"train_nme": [], "train_loss": [], "val_nme": [], "val_loss": []}
             current_epoch_losses = self.run_training_epoch(epoch_idx,current_epoch_losses)
             current_epoch_losses = self.run_validation_epoch(epoch_idx, current_epoch_losses)
-            val_mean_accuracy = np.mean(current_epoch_losses['val_acc'])
-            if val_mean_accuracy > self.best_val_model_acc:  # if current epoch's mean val acc is greater than the saved best val acc then
-                self.best_val_model_acc = val_mean_accuracy  # set the best val model acc to be current epoch's val accuracy
+            val_mean_loss = np.mean(current_epoch_losses['val_loss'])
+            if val_mean_loss < self.best_val_model_loss:  # if current epoch's mean val acc is greater than the saved best val acc then
+                self.best_val_model_loss = val_mean_loss  # set the best val model acc to be current epoch's val accuracy
                 self.best_val_model_idx = epoch_idx  # set the experiment-wise best val idx to be the current epoch's idx
             for key, value in current_epoch_losses.items():
                 total_losses[key].append(np.mean(value))
@@ -336,7 +413,7 @@ class ExperimentBuilder(nn.Module):
             epoch_elapsed_time = "{:.4f}".format(epoch_elapsed_time)
             print("Epoch {}:".format(epoch_idx), out_string, "epoch time", epoch_elapsed_time, "seconds")
             self.state['current_epoch_idx'] = epoch_idx
-            self.state['best_val_model_acc'] = self.best_val_model_acc
+            self.state['best_val_model_acc'] = self.best_val_model_loss
             self.state['best_val_model_idx'] = self.best_val_model_idx
             self.save_model(model_save_dir=self.experiment_saved_models,
                             # save model and best val idx and best val acc, using the model dir, model name and model idx
@@ -349,8 +426,8 @@ class ExperimentBuilder(nn.Module):
         self.load_model(model_save_dir=self.experiment_saved_models, model_idx=self.best_val_model_idx,
                         # load best validation model
                         model_save_name="train_model")
-        current_epoch_losses = {"test_acc": [], "test_loss": []}  # initialize a statistics dict
-
+        current_epoch_losses = {"test_nme": [], "test_loss": []}  # initialize a statistics dict
+        print(self.best_val_model_idx)
         current_epoch_losses = self.run_testing_epoch(current_epoch_losses=current_epoch_losses)
 
         test_losses = {key: [np.mean(value)] for key, value in
@@ -375,7 +452,7 @@ class ExperimentBuilder(nn.Module):
         if not x_y_only:
             if self.continue_from_epoch == -2:
                 try:
-                    self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
+                    self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
                         model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                         model_idx='latest')  # reload existing model from epoch and return best val model index
                     # and the best val acc of that model
@@ -386,7 +463,7 @@ class ExperimentBuilder(nn.Module):
                     self.state = dict()
 
             elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
-                self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
+                self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
                     model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                     model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
                 # and the best val acc of that model
@@ -395,16 +472,18 @@ class ExperimentBuilder(nn.Module):
                 raise ValueError(f"Can not load from epoch {self.continue_from_epoch}")
 
             self.model.eval()
-        for (x,y) in data: #is only executed once, data can only be accessed through an enumerator
+        for (x,y,p) in data: #is only executed once, data can only be accessed through an enumerator
             if type(x) is np.ndarray:
 
                 x_net =  torch.Tensor(x).float()[:number_images].to(device=self.device)
                 x_img = x[:number_images].copy()
                 y_img = y[:number_images].copy()
+                p_img = p[:number_images].copy()
             else:
                 x_net=x.copy()
                 x_img=x.detach().cpu().numpy()
                 y_img=y.detach().cpu().numpy()
+                p_img=p.detach().cpu().numpy()
             if  x_y_only:
                 out=None
             else:
@@ -424,5 +503,5 @@ class ExperimentBuilder(nn.Module):
 
 
             break
-        self.data_provider.render(x=x_img,y=y_img,out=out,number_images=number_images)
+        self.data_provider.render(x=x_img,y=y_img,p=p_img,out=out,number_images=number_images)
 

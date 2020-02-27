@@ -33,7 +33,7 @@ from data_set_youtube import Rescale, RandomCrop, Normalize,ToTensor
 class DataProvider(object):
     """Generic data provider."""
 
-    def __init__(self, inputs, targets, batch_size, max_num_batches=-1,
+    def __init__(self, inputs, targets, points, batch_size, max_num_batches=-1,
                  shuffle_order=True, rng=None):
         """Create a new data provider object.
 
@@ -53,6 +53,7 @@ class DataProvider(object):
         """
         self.inputs = inputs
         self.targets = targets
+        self.points = points
         if batch_size < 1:
             raise ValueError('batch_size must be >= 1')
         self._batch_size = batch_size
@@ -127,6 +128,7 @@ class DataProvider(object):
         self._current_order = self._current_order[inv_perm]
         self.inputs = self.inputs[inv_perm]
         self.targets = self.targets[inv_perm]
+        self.points = self.points[inv_perm]
         self.new_epoch()
 
     def shuffle(self):
@@ -135,6 +137,7 @@ class DataProvider(object):
         self._current_order = self._current_order[perm]
         self.inputs = self.inputs[perm]
         self.targets = self.targets[perm]
+        self.points = self.points[perm]
 
     def next(self):
         """Returns next data batch or raises `StopIteration` if at end."""
@@ -148,8 +151,9 @@ class DataProvider(object):
                             (self._curr_batch + 1) * self.batch_size)
         inputs_batch = self.inputs[batch_slice]
         targets_batch = self.targets[batch_slice]
+        points_batch = self.points[batch_slice]
         self._curr_batch += 1
-        return inputs_batch, targets_batch
+        return inputs_batch, targets_batch, points_batch
 
 
 class DataProviderYoutube(DataProvider):
@@ -237,20 +241,20 @@ class DataProviderBOE(DataProvider):
         )
         self.which_set = which_set
         self.data_set=dataset
-        inputs, targets = self.data_set.get_data(self.which_set)
+        inputs, targets, points = self.data_set.get_data(self.which_set)
         # pass the loaded data to the parent class __init__
         super(DataProviderBOE, self).__init__(
-            inputs, targets, batch_size, max_num_batches, shuffle_order, rng)
+            inputs, targets, points, batch_size, max_num_batches, shuffle_order, rng)
 
     def __len__(self):
         return self.num_batches
 
     def next(self):
         """Returns next data batch or raises `StopIteration` if at end."""
-        inputs_batch, targets_batch = super(DataProviderBOE, self).next()
-        return inputs_batch, targets_batch
+        inputs_batch, targets_batch, points_batch = super(DataProviderBOE, self).next()
+        return inputs_batch, targets_batch, points_batch
 
-    def render(self,x,y,out,number_images):
-        self.data_set.render(x,y,out,number_images)
+    def render(self,x,y,p,out,number_images):
+        self.data_set.render(x,y,p,out,number_images)
 
 
