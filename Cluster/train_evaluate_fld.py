@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import getpass
 import data_providers as data_providers
 from arg_extractor import get_args
 from data_augmentations import Cutout
@@ -20,11 +21,11 @@ rng = np.random.RandomState(seed=args.seed)  # set the seeds for the experiment
 import torch
 
 torch.manual_seed(seed=args.seed)  # sets pytorch's seed
-
+username = getpass.getuser()
 if args.dataset_name == 'Youtube':
     if os.path.isdir(args.filepath_to_data_1):
         filepath_to_data = args.filepath_to_data_1
-
+        filepath_to_data.replace("sxxxxxxx","username")
         print(f"No1 {args.filepath_to_data_1} exists")
 
     elif os.path.isdir(args.filepath_to_data_2):
@@ -45,10 +46,12 @@ if args.dataset_name == 'Youtube':
                                rng=rng,
                                max_size=max_size_dataset,
                                filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
+
     val_data = data_providers('valid', batch_size=args.batch_size,
                               rng=rng,
                               max_size=max_size_dataset,
                               filepath_to_data=filepath_to_data)  # initialize our rngs using the argument set seed
+
     test_data = data_providers('test', batch_size=args.batch_size,
                                rng=rng,
                                max_size=max_size_dataset,
@@ -65,7 +68,7 @@ if args.dataset_name == 'Youtube':
 elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset_name == 'Both':
     if os.path.isdir(args.filepath_to_data_1):
         filepath_to_data = args.filepath_to_data_1
-
+        filepath_to_data.replace("sxxxxxxx", "username")
         print(f"No1 {args.filepath_to_data_1} exists")
 
     elif os.path.isdir(args.filepath_to_data_2):

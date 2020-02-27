@@ -9,7 +9,7 @@
   "weight_decay_coefficient": 1e-05,
   "use_tqdm": false,
   "max_size_dataset": 50,
-  "filepath_to_data_1": "/home/s1999534/mlpractical/data",
+  "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data",
   "filepath_to_data_2": "../Basic_Detector/data/Youtube"
 }
 
