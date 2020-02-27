@@ -65,6 +65,8 @@ def get_args():
                         help='')
     parser.add_argument('--rbf_width', nargs="?", type=float, default=0.07,
                         help='Width of the blob')
+    parser.add_argument('--force_new_pickle', nargs="?", type=str2bool, default=False,
+                        help='Force pickle')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:

@@ -14,7 +14,8 @@
   "no_images_to_render": 5,
   "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data/Youtube",
   "filepath_to_data_2": "../Basic_Detector/data/Youtube",
-  "rbf_width": 0.07
+  "rbf_width": 0.07,
+  "force_new_pickle": false
 }
 
 
