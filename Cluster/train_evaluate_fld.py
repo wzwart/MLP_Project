@@ -1,13 +1,13 @@
 import numpy as np
 import os
 import getpass
-import data_providers as data_providers
+from data_sets import data_providers as data_providers
 from arg_extractor import get_args
 from experiment_builder import ExperimentBuilder
-from unet import UNet
-from unet_shallow import UNet_shallow
-from unet_dict import UNetDict
-from basic_detector_net import BasicDetectorNetwork
+from nets.unet import UNet
+from nets.unet_shallow import UNet_shallow
+from nets.unet_dict import UNetDict
+from nets.basic_detector_net import BasicDetectorNetwork
 from data_sets.data_set_300_YT import Dataset_300W_YT
 from data_sets.data_set_BOE import DatasetBOE
 
