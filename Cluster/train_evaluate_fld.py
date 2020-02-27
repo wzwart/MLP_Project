@@ -22,10 +22,11 @@ import torch
 
 torch.manual_seed(seed=args.seed)  # sets pytorch's seed
 username = getpass.getuser()
+username = str(username)
 if args.dataset_name == 'Youtube':
     if os.path.isdir(args.filepath_to_data_1):
         filepath_to_data = args.filepath_to_data_1
-        filepath_to_data.replace("sxxxxxxx","username")
+        filepath_to_data.replace("sxxxxxxx",username)
         print(f"No1 {args.filepath_to_data_1} exists")
 
     elif os.path.isdir(args.filepath_to_data_2):
@@ -68,7 +69,7 @@ if args.dataset_name == 'Youtube':
 elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset_name == 'Both':
     if os.path.isdir(args.filepath_to_data_1):
         filepath_to_data = args.filepath_to_data_1
-        filepath_to_data.replace("sxxxxxxx", "username")
+        filepath_to_data.replace("sxxxxxxx", username)
         print(f"No1 {args.filepath_to_data_1} exists")
 
     elif os.path.isdir(args.filepath_to_data_2):
