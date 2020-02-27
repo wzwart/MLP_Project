@@ -238,9 +238,9 @@ class Dataset_300W_YT(Dataset):
         count = 0
 
         u = np.zeros((self.width_out, self.height_out, 3))
-        u[:, :, 0] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out)
-        u[:, :, 1] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out)
-        u[:, :, 2] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out)
+        u[:, :, 0] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out,self.blob_width)
+        u[:, :, 1] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out,self.blob_width)
+        u[:, :, 2] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out,self.blob_width)
 
         u = np.clip(u, 0, 1)
 
