@@ -63,6 +63,8 @@ class MyTableWidget(QWidget):
 
         self.RX_Sync_button = QPushButton('RX Sync')
         self.RX_Sync_button.clicked.connect(self.RX_Sync)
+        self.show_out_button = QPushButton('*.out')
+        self.show_out_button.clicked.connect(self.sshtunnel.show_out)
 
         self.open_button = QPushButton('Open')
         self.open_button.clicked.connect(self.sshtunnel.open)
@@ -73,6 +75,15 @@ class MyTableWidget(QWidget):
         self.del_out_button.clicked.connect(self.sshtunnel.delete_out_files)
 
 
+        self.layout_active_job = QHBoxLayout()
+        self.check_active_button = QPushButton('Check Active')
+        self.check_active_button.clicked.connect(self.sshtunnel.check_active)
+
+        self.textbox_active_job = QLineEdit(objectName='Active_Job')
+        self.textbox_active_job.setReadOnly(True)
+
+        self.layout_active_job.addWidget(self.check_active_button)
+        self.layout_active_job.addWidget(self.textbox_active_job)
 
 
         self.layout_sync = QHBoxLayout()
@@ -80,6 +91,7 @@ class MyTableWidget(QWidget):
 
         self.layout_sync.addWidget(self.TX_Sync_button)
         self.layout_sync.addWidget(self.RX_Sync_button)
+        self.layout_sync.addWidget(self.show_out_button)
         self.layout_task.addWidget(self.open_button)
         self.layout_task.addWidget(self.del_out_button)
         self.layout_task.addWidget(self.start_batch_button)
@@ -94,6 +106,8 @@ class MyTableWidget(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.addLayout(self.layout_sync)
         self.layout.addLayout(self.layout_task)
+        self.layout.addLayout(self.layout_active_job)
+
         self.layout.addWidget(self.stdout_box)
         self.setLayout(self.layout)
 

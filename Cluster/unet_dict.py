@@ -2,10 +2,36 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+class ContractingBlock(nn.Module):
+
+    def __init__(self, in_channels, out_channels, kernel_size=3):
+        super(ContractingBlock, self).__init__()
+        self.in_channels=in_channels
+        self.out_channels=out_channels
+        self.kernel_size=kernel_size
+        self.layer_dict = nn.ModuleDict()
+        self.build_module()
+
+    def build_module(self):
+        self.layer_dict['layer_a']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.in_channels, out_channels=self.out_channels, padding=1)
+        self.layer_dict['layer_b']=torch.nn.ReLU()
+        self.layer_dict['layer_c']=torch.nn.BatchNorm2d(self.out_channels)
+        self.layer_dict['layer_4']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.out_channels, out_channels=self.out_channels, padding=1)
+        self.layer_dict['layer_5']=torch.nn.ReLU()
+        self.layer_dict['layer_6']=torch.nn.BatchNorm2d(self.out_channels)
+
+    def forward(self , x ):
+        out = self.layer_dict[f"layer_a"](x)
+        out = self.layer_dict[f"layer_b"](out)
+        out = self.layer_dict[f"layer_c"](out)
+        out = self.layer_dict[f"layer_4"](out)
+        out = self.layer_dict[f"layer_5"](out)
+        out = self.layer_dict[f"layer_6"](out)
+        return out
 
 
 class UNetDict(nn.Module):
-    def contracting_block(self, in_channels, out_channels, kernel_size=3):
+    def contracting_block1(self, in_channels, out_channels, kernel_size=3):
         block = torch.nn.Sequential(
             torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=out_channels, padding=1),
             torch.nn.ReLU(),
@@ -15,6 +41,7 @@ class UNetDict(nn.Module):
             torch.nn.BatchNorm2d(out_channels),
         )
         return block
+
 
     def expansive_block(self, in_channels, mid_channel, out_channels, kernel_size=3):
         block = torch.nn.Sequential(
@@ -68,6 +95,11 @@ class UNetDict(nn.Module):
         self.in_channel = in_channel
         self.out_channel = out_channel
         # build the network
+        if False:
+            self.contracting_block = self.contracting_block1
+        else:
+            self.contracting_block = ContractingBlock
+
         self.build_module()
 
     def build_module(self):

@@ -13,6 +13,7 @@ ON_POSIX = 'posix' in sys.builtin_module_names
 class SSHTunnel():
     def __init__(self, app):
         self.app=app
+        self.job_id="xxx_xxx"
 
     def enqueue_output(self, out, queue):
         for line in iter(out.readline, b''):
@@ -22,7 +23,7 @@ class SSHTunnel():
     def poller(self,  ssh, queue, t):
         fast = 0.01
         slow = 1
-        job_id="xxx_xxx"
+
         job_may_not_be_alive=True
         job_is_dead=True
         timeout = fast
@@ -36,25 +37,28 @@ class SSHTunnel():
                 output = queue.get_nowait()
                 timeout = fast
                 found_PARTITION = not type(re.search("PARTITION", output)) is type(None)
-                job_life_sign = not type(re.search(f"{job_id} .* R ", output)) is type(None)
+                job_life_res= re.search(f"\s+(\d*).*{self.app.short_user_id}  R ", output)
+                job_life_sign = not type(job_life_res) is type(None)
 
                 if job_life_sign:
+                    self.job_id = job_life_res.group(1)
+                    self.app.textbox_active_job.setText(output)
                     job_may_not_be_alive= False
                     job_is_dead=False
                 if found_PARTITION:
                     if job_may_not_be_alive:
                         job_is_dead= True
-                        print(f"Job {job_id} has finished")
+                        print(f"Job {self.job_id} has finished")
                     job_may_not_be_alive=True
                 match = re.search("squeue -u", output)
-                suppress = found_PARTITION or not type(match) is type(None)
+                suppress = found_PARTITION or not type(match) is type(None) or job_life_sign
                 if not suppress:
                     print(output, end='')
                 job_id_match = re.search("Submitted batch job (\d*)", output)
                 if not type(job_id_match) is type(None):
                     job_is_dead=False
-                    job_id = job_id_match[1]
-                    print("We submitted job", job_id)
+                    self.job_id = job_id_match[1]
+                    print("We submitted job", self.job_id)
             except Empty:
                 timeout = slow
             if False:
@@ -89,3 +93,12 @@ class SSHTunnel():
 
     def delete_out_files(self):
         self.ssh.stdin.write(f"rm *.out\n")
+
+    def show_out(self):
+        self.ssh.stdin.write(f"echo \"$(cat slurm-{self.job_id}.out)\"\n")
+
+    def check_active(self):
+        self.ssh.stdin.write(f"squeue -u {self.app.short_user_id}\n")
+
+
+
