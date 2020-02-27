@@ -3,17 +3,13 @@ import os
 import getpass
 import data_providers as data_providers
 from arg_extractor import get_args
-from data_augmentations import Cutout
 from experiment_builder import ExperimentBuilder
 from unet import UNet
 from unet_shallow import UNet_shallow
 from unet_dict import UNetDict
 from basic_detector_net import BasicDetectorNetwork
-from data_set_300WHM import Dataset300WHM
-from data_set_YoutubeHM import DatasetYoutubeHM
-from data_set_300_YT import Dataset_300W_YT
-from data_set_BOE import DatasetBOE
-from data_set_youtube import DatasetYoutube
+from data_sets.data_set_300_YT import Dataset_300W_YT
+from data_sets.data_set_BOE import DatasetBOE
 
 args, device = get_args()  # get arguments from command line
 rng = np.random.RandomState(seed=args.seed)  # set the seeds for the experiment

@@ -50,3 +50,4 @@ __pycache__/
 *.ipynb_checkpoints/
 Transfer Learning/
 data/
+*.ini
