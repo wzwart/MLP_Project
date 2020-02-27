@@ -55,8 +55,6 @@ class ExperimentBuilder(nn.Module):
             print("No CUDA installed, use CPU")
             use_gpu=False
             pass
-
-
         try:
             if torch.cuda.device_count() > 1 and use_gpu:
                 self.device = torch.cuda.current_device()
