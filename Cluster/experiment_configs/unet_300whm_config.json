@@ -12,8 +12,9 @@
   "landmarks_collapsed": false,
   "use_case": "train",
   "no_images_to_render": 5,
-  "filepath_to_data_1": "/home/s2000253/mlpractical/data/300W",
-  "filepath_to_data_2": "../Basic_Detector/data/300W"
+  "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data/300W",
+  "filepath_to_data_2": "../Basic_Detector/data/300W",
+  "rbf_width": 0.07
 }
 
 

@@ -13,6 +13,7 @@ echo "$local_pw" | sudo -S rsync -azv   -e"sshpass -p "$remote_pw" ssh -o Strict
 echo "TX Sync Finished"
 fi
 if [ "$USER" == "jangomezroberts" ]; then
+  source paths_jan.sh
 echo "TX Sync in Progress"
 rsync -azv  -e"ssh -o StrictHostKeyChecking=no -A s1993340@student.ssh.inf.ed.ac.uk ssh"  "$local_data_path" "$remote_data_path"
 echo "TX Sync Finished"

@@ -1,10 +1,10 @@
 {
-  "dataset_name": "300WHM",
+  "dataset_name": "Both",
   "batch_size": 10,
   "continue_from_epoch": -1,
   "seed": 0,
   "num_epochs": 30,
-  "experiment_name": "exp_300W_5",
+  "experiment_name": "exp_Both_5_512_4",
   "use_gpu": true,
   "use_tqdm": false,
   "max_size_dataset": -1,
@@ -12,8 +12,9 @@
   "landmarks_collapsed": false,
   "use_case": "train",
   "no_images_to_render": 5,
-  "filepath_to_data_1": "/home/s1999534/mlpractical/data/300-W",
-  "filepath_to_data_2": "../Basic_Detector/data/300W"
+  "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data",
+  "filepath_to_data_2": "../Basic_Detector/data",
+  "rbf_width": 0.07
 }
 
 

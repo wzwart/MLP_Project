@@ -12,7 +12,8 @@
 
   "max_size_dataset": -1,
   "no_images_to_render": 5,
-  "filepath_to_data_1": "/home/s1999534/mlpractical/data/2015_BOE_Chiu",
-  "filepath_to_data_2": "../Basic_Detector/data/2015_BOE_Chiu"
+  "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data/2015_BOE_Chiu",
+  "filepath_to_data_2": "../Basic_Detector/data/2015_BOE_Chiu",
+  "rbf_width": 0.07
 }
 
