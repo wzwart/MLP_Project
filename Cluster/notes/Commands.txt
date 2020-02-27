@@ -2,6 +2,10 @@
 #Logging into MLP:
 #First connect to UoE over VPN
 sshpass -p "w*wZ47Ws" ssh -o StrictHostKeyChecking=no -A s1999534@student.ssh.inf.ed.ac.uk
+
+
+'sshpass' ,'-p', '"w*wZ47Ws"', 'ssh' ,'-o' ,'StrictHostKeyChecking=no' ,'-A', 's1999534@student.ssh.inf.ed.ac.uk'
+
 ssh student.login
 ssh mlp1
 source .bashrc
@@ -21,6 +25,7 @@ cd /mnt/c/Data\ Science/Machine\ Learning\ Practical,\ MLP/MLP_Project/Cluster/
 
 Sync
 cd /mnt/c/Data\ Science/Machine\ Learning\ Practical,\ MLP/MLP_Project/Cluster/script_utils/
+cd /mnt/c/Data\ Science/Machine\ Learning\ Practical,\ MLP/MLP_Project/Gui
 ./txsync.sh
 ./rxsync.sh
 ./dsync.sh

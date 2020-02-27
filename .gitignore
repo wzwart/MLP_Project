@@ -25,6 +25,9 @@ Ignore/
 Cluster/__pycache__/
 Cluster/.idea/
 Cluster/script_utils/pw.sh
+
+
+
 UNet/__pycache__/
 UNet/.idea/
 Cluster/exp_basic/
@@ -42,5 +45,8 @@ landmark-detection/
 Robust-Facial-Landmark/
 sTransfer Learning/
 .idea/
+__pycache__/
+*.ipynb
+*.ipynb_checkpoints/
 Transfer Learning/
 data/

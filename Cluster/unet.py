@@ -73,7 +73,6 @@ class UNet(nn.Module):
         self.conv_decode2 = self.expansive_block(256, 128, 64)
         self.final_layer = self.final_block(128, 64, out_channel)
 
-
         # initialize a module dict, which is effectively a dictionary that can collect layers and integrate them into pytorch
         self.layer_dict = nn.ModuleDict()
 
