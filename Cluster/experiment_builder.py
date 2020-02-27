@@ -36,13 +36,27 @@ class ExperimentBuilder(nn.Module):
         self.experiment_name = experiment_name
         self.model = network_model
         self.model.reset_parameters()
-        self.device = torch.cuda.current_device()
+        try:
+            self.device = torch.cuda.current_device()
+        except:
+            self.device = torch.device('cpu')
+            pass
+
         self.use_tqdm =use_tqdm
         self.criterion=criterion.to(self.device)
         self.continue_from_epoch=continue_from_epoch
         self.data_provider=data_provider
-        print("number of available devicews" , torch.cuda.device_count())
-        print("Use GPU" , use_gpu)
+        try:
+            self.device = torch.cuda.current_device()
+            print("number of available devicews", torch.cuda.device_count())
+            print("Use GPU", use_gpu)
+        except:
+            self.device = torch.device('cpu')
+            print("No CUDA installed, use CPU")
+            use_gpu=False
+            pass
+
+
         try:
             if torch.cuda.device_count() > 1 and use_gpu:
                 self.device = torch.cuda.current_device()
