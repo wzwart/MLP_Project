@@ -1,5 +1,5 @@
 {
-  "dataset_name": "300W",
+  "dataset_name": "Both",
   "batch_size": 2,
   "continue_from_epoch": -1,
   "seed": 0,
