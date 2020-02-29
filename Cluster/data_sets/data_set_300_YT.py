@@ -105,7 +105,7 @@ class Dataset_300W_YT(Dataset):
             else:
                 raise ValueError
 
-        if os.path.exists(pickle_path):
+        if os.path.exists(pickle_path) and self.force_new_pickle==False:
             print("loading from pickle file")
             data = pickle.load(open(pickle_path, "rb"))
             (self.x, self.y, self.p) = data
