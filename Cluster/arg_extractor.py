@@ -71,6 +71,8 @@ def get_args():
                         help='Hourglass depth')
     parser.add_argument('--Hourglass_bottleneck_channels', nargs="?", type=int, default=256,
                         help='hourglass bottleneck channels')
+    parser.add_argument('--use_skip', nargs="?", type=str2bool, default=False,
+                        help='use skip connections')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:

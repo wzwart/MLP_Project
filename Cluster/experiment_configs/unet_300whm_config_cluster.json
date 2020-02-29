@@ -17,7 +17,8 @@
   "rbf_width": 0.07,
   "force_new_pickle": false,
   "Hourglass_depth": 2,
-  "Hourglass_bottleneck_channels": 256
+  "Hourglass_bottleneck_channels": 256,
+  "use_skip": false
 }
 
 
