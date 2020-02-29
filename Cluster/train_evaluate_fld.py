@@ -117,7 +117,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
-            blob_width=args.rbf_width,
+            rbf_width=args.rbf_width,
             which_dataset=2,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
@@ -139,7 +139,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
         criterion = torch.nn.CrossEntropyLoss()
     else:
         if args.landmarks_collapsed:
-            net = UNet_shallow(in_channel=3, out_channel=1)
+            net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=2, bottle_neck_channels=256)
         else:
             # net = UNet(in_channel=3, out_channel=args.num_landmarks)
             net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=2, bottle_neck_channels=256)

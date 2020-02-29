@@ -134,7 +134,7 @@ class ExperimentBuilder(nn.Module):
                 model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
             # and the best val acc of that model
             self.starting_epoch = self.state['current_epoch_idx']
-            print("WOw {}".format(self.best_val_model_idx))
+
         else:
             self.starting_epoch = 0
             self.state = dict()
@@ -287,9 +287,9 @@ class ExperimentBuilder(nn.Module):
 
         loss = self.criterion(loss_in, loss_target)
 
-        nme = self.compute_nme(out, p)
+        #nme = self.compute_nme(out, p)
 
-        return loss.data.detach().cpu().numpy(), nme
+        return loss.data.detach().cpu().numpy(), 3
 
     def save_model(self, model_save_dir, model_save_name, model_idx, state):
         """

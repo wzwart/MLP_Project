@@ -49,7 +49,7 @@ def generateHeatmap(center_x, center_y, width, height,rbf_width):
 class Dataset_300W_YT(Dataset):
     """300W and Youtube Faces datasets"""
 
-    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,blob_width, which_dataset, landmarks_collapsed=False, max_size= -1):
+    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,rbf_width, which_dataset, landmarks_collapsed=False, max_size= -1):
         """
         Args:
             root_dir: Data directory containing both 300W and Youtube Faces directories.
@@ -73,7 +73,7 @@ class Dataset_300W_YT(Dataset):
         self.width_out=width_out
         self.height_out=height_out
         self.num_landmarks=num_landmarks
-        self.blob_width = blob_width
+        self.rbf_width=rbf_width
         self.which_dataset=which_dataset
         self.landmarks_collapsed=landmarks_collapsed
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
@@ -191,9 +191,9 @@ class Dataset_300W_YT(Dataset):
                         u = np.zeros((self.width_out, self.height_out, self.num_landmarks))
                     for j, (x_p, y_p) in enumerate(points[:self.num_landmarks]):
                         if self.landmarks_collapsed:
-                            u[:, :, 0] +=generateHeatmap(x_p, y_p, self.width_out, self.height_out,self.blob_width)
+                            u[:, :, 0] +=generateHeatmap(x_p, y_p, self.width_out, self.height_out, self.rbf_width)
                         else:
-                            u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out,self.blob_width)
+                            u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out, self.rbf_width)
                     u=np.clip(u,0,1)
                     y.append(u)
                     p.append(points[:self.num_landmarks])
@@ -238,9 +238,9 @@ class Dataset_300W_YT(Dataset):
         count = 0
 
         u = np.zeros((self.width_out, self.height_out, 3))
-        u[:, :, 0] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out,self.blob_width)
-        u[:, :, 1] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out,self.blob_width)
-        u[:, :, 2] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out,self.blob_width)
+        u[:, :, 0] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out, self.rbf_width)
+        u[:, :, 1] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out, self.rbf_width)
+        u[:, :, 2] = generateHeatmap(int(self.width_out / 2), int(self.height_out / 2), self.width_out, self.height_out, self.rbf_width)
 
         u = np.clip(u, 0, 1)
 
