@@ -49,7 +49,7 @@ def generateHeatmap(center_x, center_y, width, height,rbf_width):
 class Dataset_300W_YT(Dataset):
     """300W and Youtube Faces datasets"""
 
-    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,rbf_width, which_dataset, landmarks_collapsed=False, max_size= -1):
+    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,rbf_width, which_dataset,force_new_pickle, landmarks_collapsed=False, max_size= -1):
         """
         Args:
             root_dir: Data directory containing both 300W and Youtube Faces directories.
@@ -75,6 +75,7 @@ class Dataset_300W_YT(Dataset):
         self.num_landmarks=num_landmarks
         self.rbf_width=rbf_width
         self.which_dataset=which_dataset
+        self.force_new_pickle=force_new_pickle
         self.landmarks_collapsed=landmarks_collapsed
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
         self.create_dataset()
@@ -104,7 +105,7 @@ class Dataset_300W_YT(Dataset):
             else:
                 raise ValueError
 
-        if os.path.exists(pickle_path):
+        if os.path.exists(pickle_path) and self.force_new_pickle==False:
             print("loading from pickle file")
             data = pickle.load(open(pickle_path, "rb"))
             (self.x, self.y, self.p) = data

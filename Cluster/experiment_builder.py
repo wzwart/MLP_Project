@@ -15,7 +15,7 @@ from torch.optim.adam import Adam
 from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
-    def __init__(self, network_model, experiment_name, num_epochs, data_provider,train_data, val_data,
+    def __init__(self, network_model, experiment_name, num_epochs,rbf_width, data_provider,train_data, val_data,
                  test_data, use_gpu, criterion, optimizer, use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
@@ -36,6 +36,7 @@ class ExperimentBuilder(nn.Module):
         self.experiment_name = experiment_name
         self.model = network_model
         self.model.reset_parameters()
+        self.rbf_width=rbf_width
         try:
             self.device = torch.cuda.current_device()
         except:
@@ -146,11 +147,11 @@ class ExperimentBuilder(nn.Module):
 
         return total_num_params
 
-    def generateHeatmap(self, center_x, center_y, width, height):
+    def generateHeatmap(self, center_x, center_y, width, height,rbf_width):
         x = np.arange(width)
         y = np.arange(height)
         xv, yv = np.meshgrid(x, y)
-        width_norm = 0.07 * np.sqrt(width * height)
+        width_norm = rbf_width * np.sqrt(width * height)
         hm = np.exp(-0.5 * ((xv - center_x) ** 2 + (yv - center_y) ** 2) / (width_norm ** 2))
         # hm = hm - hm.mean(axis=(0, 1))
         # but don't normalize variance
@@ -175,9 +176,9 @@ class ExperimentBuilder(nn.Module):
         width_out = out.shape[2]
         n_images = out.shape[0]
         u = np.zeros((width_out, height_out, 3))
-        u[:, :, 0] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
-        u[:, :, 1] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
-        u[:, :, 2] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
+        u[:, :, 0] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out,self.rbf_width)
+        u[:, :, 1] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out,self.rbf_width)
+        u[:, :, 2] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out,self.rbf_width)
 
         u = np.clip(u, 0, 1)
 

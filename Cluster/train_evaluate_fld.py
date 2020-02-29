@@ -97,8 +97,9 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
-            blob_width=args.rbf_width,
+            rbf_width=args.rbf_width,
             which_dataset=0,
+            force_new_pickle=args.force_new_pickle,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
     elif args.dataset_name == 'Youtube':
@@ -107,8 +108,9 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
-            blob_width=args.rbf_width,
+            rbf_width=args.rbf_width,
             which_dataset=1,
+            force_new_pickle=args.force_new_pickle,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
     elif args.dataset_name == 'Both':
@@ -119,6 +121,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             num_landmarks=args.num_landmarks,
             rbf_width=args.rbf_width,
             which_dataset=2,
+            force_new_pickle=args.force_new_pickle,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
     else:
@@ -153,6 +156,7 @@ else:
 conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     experiment_name=args.experiment_name,
                                     num_epochs=args.num_epochs,
+                                    rbf_width=args.rbf_width,
                                     continue_from_epoch=args.continue_from_epoch,
                                     use_tqdm=args.use_tqdm,
                                     data_provider=data_provider,
