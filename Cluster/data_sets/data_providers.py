@@ -5,28 +5,22 @@ This module provides classes for loading datasets and iterating over batches of
 data points.
 """
 from __future__ import print_function
-import pickle
-import gzip
-import numpy as np
-import os
+
 DEFAULT_SEED = 20112018
-from PIL import Image
 import os
 import os.path
 import numpy as np
 import sys
 if sys.version_info[0] == 2:
-    import cPickle as pickle
+    pass
 else:
-    import pickle
+    pass
 
-import torch.utils.data as data
-# from  torch import  FloatTensor
-from torchvision.datasets.utils import download_url, check_integrity
-from torchvision import transforms, utils
+    # from  torch import  FloatTensor
+    from torchvision import transforms
 
-from data_set_youtube import DatasetYoutube
-from data_set_youtube import Rescale, RandomCrop, Normalize,ToTensor
+    from data_sets.data_set_youtube import DatasetYoutube
+from data_sets.data_set_youtube import Rescale, RandomCrop, Normalize,ToTensor
 
 
 

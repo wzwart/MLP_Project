@@ -1,19 +1,15 @@
 import numpy as np
 import os
 import getpass
-import data_providers as data_providers
+from data_sets import data_providers as data_providers
 from arg_extractor import get_args
-from data_augmentations import Cutout
 from experiment_builder import ExperimentBuilder
-from unet import UNet
-from unet_shallow import UNet_shallow
-from unet_dict import UNetDict
-from basic_detector_net import BasicDetectorNetwork
-from data_set_300WHM import Dataset300WHM
-from data_set_YoutubeHM import DatasetYoutubeHM
-from data_set_300_YT import Dataset_300W_YT
-from data_set_BOE import DatasetBOE
-from data_set_youtube import DatasetYoutube
+from nets.unet import UNet
+from nets.unet_shallow import UNet_shallow
+from nets.unet_dict import UNetDict
+from nets.basic_detector_net import BasicDetectorNetwork
+from data_sets.data_set_300_YT import Dataset_300W_YT
+from data_sets.data_set_BOE import DatasetBOE
 
 args, device = get_args()  # get arguments from command line
 rng = np.random.RandomState(seed=args.seed)  # set the seeds for the experiment
@@ -121,7 +117,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             width_in=width_in, height_in=height_in, width_out=width_out,
             height_out=height_out,
             num_landmarks=args.num_landmarks,
-            blob_width=args.rbf_width,
+            rbf_width=args.rbf_width,
             which_dataset=2,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
@@ -143,7 +139,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
         criterion = torch.nn.CrossEntropyLoss()
     else:
         if args.landmarks_collapsed:
-            net = UNet_shallow(in_channel=3, out_channel=1)
+            net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=2, bottle_neck_channels=256)
         else:
             # net = UNet(in_channel=3, out_channel=args.num_landmarks)
             net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=2, bottle_neck_channels=256)
