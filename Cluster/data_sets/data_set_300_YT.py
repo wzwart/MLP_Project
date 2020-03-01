@@ -123,9 +123,10 @@ class Dataset_300W_YT(Dataset):
 
                 landmarks = np.vstack((landmarks1, landmarks2))
 
-            x = []
-            y = []
-            p = []
+            image_paths, landmarks = shuffle(image_paths, landmarks, random_state=0)
+            self.x = []
+            self.y = []
+            self.p = []
             if self.max_size == -1:
                 number_of_images = len(image_paths)
             else:
@@ -138,7 +139,7 @@ class Dataset_300W_YT(Dataset):
                             f"Generate Images {i} of {number_of_images}")  # update progress bar string output
                         pbar_test.update(1)  # update progress bar status
 
-                    if (self.max_size != -1 and len(x) >= self.max_size):
+                    if (self.max_size != -1 and len(self.x) >= self.max_size):
                         break
                     # Resize the image to the input size
                     resized, points = resizeInput(image_path, landmarks[i], self.width_in, self.height_in)
@@ -147,7 +148,7 @@ class Dataset_300W_YT(Dataset):
                     resized = resized-resized.mean(axis=(0,1))
                     resized = resized / np.sqrt(resized.var(axis=(0,1)))
 
-                    x.append(resized)
+                    self.x.append(resized)
 
                     # Scale the landmark coordinates to the output size
                     ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
@@ -166,14 +167,14 @@ class Dataset_300W_YT(Dataset):
                         else:
                             u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out, self.rbf_width)
                     u=np.clip(u,0,1)
-                    y.append(u)
-                    p.append(points[:self.num_landmarks])
+                    self.y.append(u)
+                    self.p.append(points[:self.num_landmarks])
 
-            self.x= np.transpose(np.array(x),(0,3,1,2))
-            self.y= np.array(y)
-            self.p = np.array(p)
+            self.x= np.transpose(np.array(self.x),(0,3,1,2))
+            self.y= np.array(self.y)
+            self.p = np.array(self.p)
 
-            self.x, self.y, self.p = shuffle(self.x, self.y, self.p, random_state=0)
+            #self.x, self.y, self.p = shuffle(self.x, self.y, self.p, random_state=0)
             data =(self.x, self.y, self.p)
             pickle.dump(data, open(pickle_path, "wb"))
         self.length=len(self.x)
