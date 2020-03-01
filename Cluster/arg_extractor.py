@@ -73,6 +73,8 @@ def get_args():
                         help='hourglass bottleneck channels')
     parser.add_argument('--use_skip', nargs="?", type=str2bool, default=False,
                         help='use skip connections')
+    parser.add_argument('--graph_name', nargs="?", type=str, default="/latest_graph.png",
+                        help='name of graph')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:

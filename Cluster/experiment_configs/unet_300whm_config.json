@@ -18,7 +18,8 @@
   "force_new_pickle": false,
   "Hourglass_depth": 2,
   "Hourglass_bottleneck_channels": 256,
-  "use_skip": false
+  "use_skip": false,
+  "graph_name": "/graph_1.png"
 }
 
 
