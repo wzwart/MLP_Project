@@ -10,7 +10,7 @@ if [ "$USER" == "wwzwart" ]; then
 source paths_WZ.sh
 echo "TX Sync in Progress"
 
-
+echo $local_path
 echo "$local_pw" | sudo -S rsync -azv  "${tx_exclude[@]}" -e"sshpass -p "$remote_pw" ssh -o StrictHostKeyChecking=no -A "$remote_user" ssh" "$local_path" "$remote_path"
 
 

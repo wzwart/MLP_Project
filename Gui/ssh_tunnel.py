@@ -24,7 +24,7 @@ class SSHTunnel():
         fast = 0.01
         slow = 1
 
-        job_may_not_be_alive=True
+        job_may_not_be_alive=False
         job_is_dead=True
         timeout = fast
         time_out_counter = 0
@@ -99,6 +99,9 @@ class SSHTunnel():
 
     def check_active(self):
         self.ssh.stdin.write(f"squeue -u {self.app.short_user_id}\n")
+
+    def kill_batch(self):
+        self.ssh.stdin.write(f"scancel {self.job_id}\n")
 
 
 

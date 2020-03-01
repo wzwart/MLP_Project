@@ -67,13 +67,19 @@ def get_args():
                         help='Width of the blob')
     parser.add_argument('--force_new_pickle', nargs="?", type=str2bool, default=False,
                         help='Force pickle')
+    parser.add_argument('--Hourglass_depth', nargs="?", type=int, default=2,
+                        help='Hourglass depth')
+    parser.add_argument('--Hourglass_bottleneck_channels', nargs="?", type=int, default=256,
+                        help='hourglass bottleneck channels')
+    parser.add_argument('--use_skip', nargs="?", type=str2bool, default=False,
+                        help='use skip connections')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:
         args = extract_args_from_json(json_file_path=args.filepath_to_arguments_json_file, existing_args_dict=args)
 
     arg_str = [(str(key), str(value)) for (key, value) in vars(args).items()]
-    print(arg_str)
+
 
     import torch
 

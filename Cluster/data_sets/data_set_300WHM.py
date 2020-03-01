@@ -8,39 +8,9 @@ from skimage.transform import resize
 from torch.utils.data import Dataset
 import cv2
 import matplotlib.pyplot as plt
+from data_sets.data_set_utils import *
 import matplotlib.image as mpim
 
-def thresh(x):
-    return (x!=0)*1
-
-
-def resizeInput(image_file, landmarks, width, height):
-    ori_image = cv2.imread(image_file)
-    height_im, width_im, channels = ori_image.shape
-    # resize image
-    dim = (width, height)
-    resized = cv2.resize(ori_image, dim, interpolation=cv2.INTER_AREA)
-
-    # Modify landmark values
-
-    landmarks = landmarks.astype('float').reshape((int(landmarks.shape[0] / 2), 2))
-    ratio = np.array([(width_im / width), (height_im / height)])
-    landmarks = landmarks / ratio
-    landmarks = np.around(landmarks, decimals=3)
-
-    return resized, landmarks
-
-
-
-def generateHeatmap(center_x, center_y, width, height,rbf_width):
-    x = np.arange( width)
-    y = np.arange( height)
-    xv, yv = np.meshgrid(x, y)
-    width_norm=rbf_width  *np.sqrt(width*height)
-    hm= np.exp(-0.5*((xv-center_x)**2+(yv-center_y)**2)/(width_norm**2))
-    # hm = hm - hm.mean(axis=(0, 1))
-    # but don't normalize variance
-    return hm
 
 
 class Dataset300WHM(Dataset):
@@ -104,12 +74,13 @@ class Dataset300WHM(Dataset):
                 number_of_images = len(image_paths)
             else:
                 number_of_images = min(len(image_paths),self.max_size)
-            with tqdm.tqdm(total=number_of_images , file=sys.stdout) as pbar_test:  # ini a progress bar
+            n_updates = min(50, number_of_images)
+            with tqdm.tqdm(total=n_updates, file=sys.stdout) as pbar_test:  # ini a progress bar
                 for i, image_path in enumerate(image_paths):
-
-                    pbar_test.set_description(
-                        "Generate Images")  # update progress bar string output
-                    pbar_test.update(1)  # update progress bar status
+                    if i % int(number_of_images / n_updates) == 0:
+                        pbar_test.set_description(
+                            f"Generate Images {i} of {number_of_images}")  # update progress bar string output
+                        pbar_test.update(1)  # update progress bar status
 
                     if (self.max_size != -1 and len(x) >= self.max_size):
                         break

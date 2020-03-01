@@ -185,7 +185,7 @@ class UNetDict(nn.Module):
         )
         return block
 
-    def __init__(self, in_channel, out_channel, hour_glass_depth, bottle_neck_channels):
+    def __init__(self, in_channel, out_channel, hour_glass_depth, bottle_neck_channels,use_skip):
         super(UNetDict, self).__init__()
         # Encode
         self.hour_glass_depth=hour_glass_depth
@@ -193,6 +193,7 @@ class UNetDict(nn.Module):
         self.layer_dict = nn.ModuleDict()
         self.in_channel = in_channel
         self.out_channel = out_channel
+        self.use_skip = use_skip
         # build the network
         if False:
             self.contracting_block = self.contracting_block_seq
@@ -242,8 +243,10 @@ class UNetDict(nn.Module):
             out = self.layer_dict[f"conv_decode{i}"](out)
             out = self.crop_and_concat(out, all[f"conv_encode{i-1}_out"], crop=False)
         final_layer = self.layer_dict[f"final_layer"](out)
-        outputs = final_layer.permute(0, 2, 3, 1)
-        return outputs
+        out = final_layer.permute(0, 2, 3, 1)
+
+        return out
+
 
     def reset_parameters(self):
         """

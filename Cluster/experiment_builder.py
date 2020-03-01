@@ -8,6 +8,7 @@ import tqdm
 import os
 import numpy as np
 import time
+from data_sets.data_set_utils import *
 from matplotlib import cm
 
 from torch.optim.adam import Adam
@@ -15,7 +16,7 @@ from torch.optim.adam import Adam
 from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
-    def __init__(self, network_model, experiment_name, num_epochs, data_provider,train_data, val_data,
+    def __init__(self, network_model, experiment_name, num_epochs,rbf_width, data_provider,train_data, val_data,
                  test_data, use_gpu, criterion, optimizer, use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
@@ -36,6 +37,7 @@ class ExperimentBuilder(nn.Module):
         self.experiment_name = experiment_name
         self.model = network_model
         self.model.reset_parameters()
+        self.rbf_width=rbf_width
         try:
             self.device = torch.cuda.current_device()
         except:
@@ -46,6 +48,8 @@ class ExperimentBuilder(nn.Module):
         self.criterion=criterion.to(self.device)
         self.continue_from_epoch=continue_from_epoch
         self.data_provider=data_provider
+
+
         try:
             self.device = torch.cuda.current_device()
             print("number of available devicews", torch.cuda.device_count())
@@ -79,9 +83,9 @@ class ExperimentBuilder(nn.Module):
         self.train_data = train_data
         self.val_data = val_data
         self.test_data = test_data
-
-
         self.optimizer =optimizer
+        self.calc_hm_kernel(width=test_data.data_set.width_out, height=test_data.data_set.height_out, n_landmarks= test_data.data_set.num_landmarks, rbf_width=test_data.data_set.rbf_width)
+
 
         print('System learnable parameters')
         num_conv_layers = 0
@@ -94,8 +98,6 @@ class ExperimentBuilder(nn.Module):
             if all(item in name for item in ['linear', 'weight']):
                 num_linear_layers += 1
             total_num_parameters += np.prod(value.shape)
-
-
 
         # Generate the directory names
         self.experiment_folder = os.path.abspath(experiment_name)
@@ -146,76 +148,43 @@ class ExperimentBuilder(nn.Module):
 
         return total_num_params
 
-    def generateHeatmap(self, center_x, center_y, width, height):
-        x = np.arange(width)
-        y = np.arange(height)
-        xv, yv = np.meshgrid(x, y)
-        width_norm = 0.07 * np.sqrt(width * height)
-        hm = np.exp(-0.5 * ((xv - center_x) ** 2 + (yv - center_y) ** 2) / (width_norm ** 2))
-        # hm = hm - hm.mean(axis=(0, 1))
-        # but don't normalize variance
-        return hm
 
-    def NME(self, true, predicted):
 
-        bbox = np.max(true, axis=0) - np.min(true, axis=0)
-        d = np.sqrt(bbox[0]*bbox[1])
-        return np.sum(np.square(true-predicted))/d
+    def calc_hm_kernel(self,width,  height, n_landmarks, rbf_width):
+        self.hm_kernel_size = int((rbf_width * width * 8) // 2) * 2 + 1
+        # print("kernel_size:", kernel_size)
+        hm = generateHeatmap(self.hm_kernel_size / 2, self.hm_kernel_size / 2, self.hm_kernel_size, self.hm_kernel_size,
+                             rbf_width=rbf_width * np.sqrt(width * height) / self.hm_kernel_size)
+        hm_kernel = np.array([[hm]])
+        self.hm_kernel = torch.Tensor(hm_kernel).float().to(self.device)
 
-    def compute_nme(self, out, p):
 
-        set1 = cm.get_cmap('Set1')
-        colors = np.asarray(set1.colors)
-        no_colors = colors.shape[0]
-        no_landmarks = out.shape[3]
-
-        nme = 0
-        count = 0
-        height_out = out.shape[1]
-        width_out = out.shape[2]
-        n_images = out.shape[0]
-        u = np.zeros((width_out, height_out, 3))
-        u[:, :, 0] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
-        u[:, :, 1] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
-        u[:, :, 2] = self.generateHeatmap(int(width_out / 2), int(height_out / 2), width_out, height_out)
-
-        u = np.clip(u, 0, 1)
-
-        u = np.array([u.transpose((2, 0, 1))])
-        u = torch.Tensor(u).float().to(self.device)
-        for row_num in range(n_images):
-            if type(out) != type(None):
-                predicted = np.array([])
-                p_img = p[row_num]
-                for i in range(no_landmarks):
-                    out_img = (out[row_num] - out[row_num].min())
-                    #print(out_img.shape)
-                    t = torch.Tensor(3, out_img.shape[0], out_img.shape[1])
-                    t[0] = out_img[:, :, i] * colors[i % no_colors, 0]
-                    t[1] = out_img[:, :, i] * colors[i % no_colors, 1]
-                    t[2] = out_img[:, :, i] * colors[i % no_colors, 2]
-                    t = t.permute((1, 2, 0))
-
-                    out_conv = t.permute((2, 0, 1)).unsqueeze(0)
-                    out_conv = out_conv.to(self.device)
-                    padded_tensor = F.pad(out_conv, (
-                        int(height_out / 2), int(height_out / 2) - 1, int(width_out / 2),
-                        int(width_out / 2) - 1))
-                    cross_corr = F.conv2d(padded_tensor, u, padding=0)
-
-                    argmax = torch.argmax(cross_corr)
-
-                    index_i, index_j = np.unravel_index(argmax.detach().cpu(),
-                                                        (out_img.shape[0],out_img.shape[1]))
-                    if (i == 0):
-                        predicted = np.hstack((predicted, np.array([index_j, index_i])))
-                    else:
-                        predicted = np.vstack((predicted, np.array([index_j, index_i])))
-
-                nme += self.NME(p_img, predicted)
-                count += 1
-
-        return nme/count
+    def calc_nme(self, out, p):
+        height = out.shape[1]
+        width = out.shape[2]
+        n_landmarks = out.shape[3]
+        batch_size = out.shape[0]
+        # print("hm_kernel.shape:", hm_kernel.shape)
+        out=out.transpose(1,3)
+        out = out.view(batch_size * n_landmarks, 1, height, width)
+        A = F.conv2d(input=out, weight=self.hm_kernel, stride=1, padding=self.hm_kernel_size // 2)
+        # print(A_flat.shape)
+        # print(torch.max(A_flat, dim=2))
+        A_flat = torch.flatten(A, start_dim=2)
+        # unfortunatley argmax can only find the maximum in a one dimensional plane, therefore we need to flatten the height and width:
+        A_max = torch.argmax(A_flat, dim=2)
+        # restore x from flattened max
+        X = torch.remainder(A_max, width)
+        x_np = X.detach().cpu().numpy().reshape(batch_size,n_landmarks)
+        # # restore y from flattened max
+        Y = A_max // width
+        y_np = Y.detach().cpu().numpy().reshape(batch_size,n_landmarks)
+        # combine into 2d points
+        p_pred= np.array([x_np,y_np]).transpose(1,2,0)
+        # calulate errors in output pixel scale, i.e. this is not normalized
+        errors= (p-p_pred)**2
+        # normalize
+        return np.sqrt(np.sum(errors))/(n_landmarks*batch_size)
 
     def run_train_iter(self, x, y, p):
         """
@@ -231,6 +200,7 @@ class ExperimentBuilder(nn.Module):
         #     y = np.argmax(y, axis=1)  # convert one hot encoded labels to single integer labels
 
         #print(type(x))
+
 
         if type(x) is np.ndarray:
             x= torch.Tensor(x).float().to(device=self.device)
@@ -253,12 +223,11 @@ class ExperimentBuilder(nn.Module):
         loss.backward()  # backpropagate to compute gradients for current iter loss
 
         self.optimizer.step()  # update network parameters
-        # _, predicted = torch.max(out.data, 1)  # get argmax of predictions
-        #
-        # accuracy = np.mean(list(predicted.eq(y.data).cpu()))  # compute accuracy
-        #nme = self.compute_nme(out, p)
+        # nme=2
+        nme = self.calc_nme(out, p)
 
-        return loss.data.detach().cpu().numpy(), 3
+
+        return loss.data.detach().cpu().numpy(), nme
 
     def run_evaluation_iter(self, x, y, p):
         """
@@ -287,9 +256,10 @@ class ExperimentBuilder(nn.Module):
 
         loss = self.criterion(loss_in, loss_target)
 
+        nme = self.calc_nme(out, p)
         #nme = self.compute_nme(out, p)
 
-        return loss.data.detach().cpu().numpy(), 3
+        return loss.data.detach().cpu().numpy(), nme
 
     def save_model(self, model_save_dir, model_save_name, model_idx, state):
         """
@@ -304,76 +274,43 @@ class ExperimentBuilder(nn.Module):
         state['network'] = self.state_dict()  # save network parameter and other variables.
         torch.save(state, f=os.path.join(model_save_dir, "{}_{}".format(model_save_name, str(
             model_idx))))  # save state at prespecified filepath
-
-    def run_training_epoch(self, epoch_idx, current_epoch_losses):
+    def run_epoch(self, epoch_idx, current_epoch_losses, which_set):
+        if which_set=="train":
+            data=  self.train_data
+        elif which_set=="val":
+            data = self.val_data
+        elif which_set=="test":
+            data = self.test_data
+        else:
+            print(f"Unknown set {which_set}")
+            raise ValueError
+        loss_key=f"{which_set}_loss"
+        nme_key=f"{which_set}_nme"
         if not self.use_tqdm :
             f = open("log.log", "w")
         else:
             f = sys.stdout
-        with tqdm.tqdm(total=len(self.train_data), file=f) as pbar_train:  # create a progress bar for training
-            running_loss=0
-            for idx, (x,y,p)  in enumerate(self.train_data):  # get data batches
-                loss, accuracy = self.run_train_iter(x=x, y=y, p=p)  # take a training iter step
-                current_epoch_losses["train_loss"].append(loss)  # add current iter loss to the train loss list
-                current_epoch_losses["train_nme"].append(accuracy)  # add current iter acc to the train acc list
+        update_interval  =10
+        with tqdm.tqdm(total=len(data), file=f) as pbar_train:  # create a progress bar for training
+            running_loss=0.0
+            running_nme=0.0
+            for idx, (x,y,p)  in enumerate(data):  # get data batches
+                if which_set=="train":
+                    loss, nme = self.run_train_iter(x=x, y=y, p=p)  # take a training iter step
+                else:
+                    loss, nme = self.run_evaluation_iter(x=x, y=y, p=p)
+                current_epoch_losses[loss_key].append(loss)  # add current iter loss to the train loss list
+                current_epoch_losses[nme_key].append(nme)  # add current iter acc to the train acc list
                 if self.use_tqdm:
                     pbar_train.update(1)
-                    pbar_train.set_description("Epoch {}: Train     loss: {}".format(epoch_idx,loss))
+                    pbar_train.set_description(f"Epoch {epoch_idx}: {which_set.capitalize().ljust(6)} loss: {loss:.4f}: {which_set.capitalize().ljust(6)} nme: {nme:.4f}")
                 else:
                     running_loss += loss.item()
-                    if idx % 10 == 9 and not self.use_tqdm:  # print every 10 batches
-                        print('Train epoch {}, Batch: {}, Avg. Loss: {}'.format(epoch_idx, idx + 1, running_loss / 10))
+                    running_nme += nme.item()
+                    if idx % update_interval == update_interval-1 and not self.use_tqdm:  # print every 10 batches
+                        print(f'{which_set.capitalize().ljust(6)} epoch {epoch_idx}, Batch: {idx + 1}, Avg. Loss: {running_loss / update_interval:.4f}  NME: {running_nme / update_interval:.4f}')
                         running_loss = 0.0
-        return current_epoch_losses
-
-    def run_validation_epoch(self, epoch_idx, current_epoch_losses):
-        if not self.use_tqdm :
-            f = open("log.log", "w")
-        else:
-            f = sys.stdout
-        running_loss = 0
-        with tqdm.tqdm(total=len(self.val_data), file=f) as pbar_val:  # create a progress bar for validation
-            for idx, (x, y, p) in enumerate(self.val_data):  # get data batches
-
-                loss, accuracy = self.run_evaluation_iter(x=x, y=y, p=p)  # run a validation iter
-                current_epoch_losses["val_loss"].append(loss)  # add current iter loss to val loss list.
-                current_epoch_losses["val_nme"].append(accuracy)  # add current iter acc to val acc lst.
-                if self.use_tqdm:
-                    pbar_val.update(1)  # add 1 step to the progress bar
-                    pbar_val.set_description(
-                        "Epoch {}: Validate  loss: {}".format(epoch_idx, loss))
-                else:
-                    running_loss += loss.item()
-                    if idx % 10 == 9 and not self.use_tqdm:  # print every 10 batches
-                        print('Validate Epoch {}, Batch: {}, Avg. Loss: {}'.format(epoch_idx, idx + 1, running_loss / 10))
-                        running_loss = 0.0
-
-        return current_epoch_losses
-
-    def run_testing_epoch(self, current_epoch_losses):
-        running_loss = 0
-        if not self.use_tqdm :
-            f = open("log.log", "w")
-        else:
-            f = sys.stdout
-        running_loss = 0
-
-        with tqdm.tqdm(total=len(self.test_data), file=f) as pbar_test:  # ini a progress bar
-            for idx, (x, y, p) in enumerate(self.test_data):  # sample batch
-
-                loss, accuracy = self.run_evaluation_iter(x=x,
-                                                          y=y, p=p)  # compute loss and accuracy by running an evaluation step
-                current_epoch_losses["test_loss"].append(loss)  # save test loss
-                current_epoch_losses["test_nme"].append(accuracy)  # save test accuracy
-                if self.use_tqdm:
-                    pbar_test.update(1)  # update progress bar status
-                    pbar_test.set_description(
-                        "Test: loss: {}".format(loss))  # update progress bar string output
-                else:
-                    running_loss += loss.item()
-                    if idx % 10 == 9 and not self.use_tqdm:  # print every 10 batches
-                        print('Test Batch: {}, Avg. Loss: {}'.format(idx + 1, running_loss / 10))
-                        running_loss = 0.0
+                        running_nme = 0.0
         return current_epoch_losses
 
     def load_model(self, model_save_dir, model_save_name, model_idx):
@@ -399,8 +336,8 @@ class ExperimentBuilder(nn.Module):
 
             epoch_start_time = time.time()
             current_epoch_losses = {"train_nme": [], "train_loss": [], "val_nme": [], "val_loss": []}
-            current_epoch_losses = self.run_training_epoch(epoch_idx,current_epoch_losses)
-            current_epoch_losses = self.run_validation_epoch(epoch_idx, current_epoch_losses)
+            current_epoch_losses = self.run_epoch(epoch_idx, current_epoch_losses, "train")
+            current_epoch_losses = self.run_epoch(epoch_idx, current_epoch_losses, "val")
             val_mean_loss = np.mean(current_epoch_losses['val_loss'])
             if val_mean_loss < self.best_val_model_loss:  # if current epoch's mean val acc is greater than the saved best val acc then
                 self.best_val_model_loss = val_mean_loss  # set the best val model acc to be current epoch's val accuracy
@@ -418,8 +355,8 @@ class ExperimentBuilder(nn.Module):
 
             # load_statistics(experiment_log_dir=self.experiment_logs, filename='summary.csv') # How to load a csv file if you need to
 
-            out_string = "_".join(
-                ["{}_{:.4f}".format(key, np.mean(value)) for key, value in current_epoch_losses.items()])
+            out_string = ",".join(
+                ["{}:{:.4f}".format(key, np.mean(value)) for key, value in current_epoch_losses.items()])
             # create a string to use to report our epoch metrics
             epoch_elapsed_time = time.time() - epoch_start_time  # calculate time taken for epoch
             epoch_elapsed_time = "{:.4f}".format(epoch_elapsed_time)
@@ -440,7 +377,7 @@ class ExperimentBuilder(nn.Module):
                         model_save_name="train_model")
         current_epoch_losses = {"test_nme": [], "test_loss": []}  # initialize a statistics dict
         print(self.best_val_model_idx)
-        current_epoch_losses = self.run_testing_epoch(current_epoch_losses=current_epoch_losses)
+        current_epoch_losses = self.run_epoch(current_epoch_losses=current_epoch_losses,epoch_idx="-", which_set="test")
 
         test_losses = {key: [np.mean(value)] for key, value in
                        current_epoch_losses.items()}  # save test set metrics in dict format
@@ -511,8 +448,6 @@ class ExperimentBuilder(nn.Module):
                 loss = self.criterion(torch.Tensor(loss_in).float().to(device=self.device), torch.Tensor(loss_target).float().to(device=self.device))
                 print(loss)
                 out = out.detach().cpu().numpy()  # forward the data in the model
-
-
 
             break
         self.data_provider.render(x=x_img,y=y_img,p=p_img,out=out,number_images=number_images)

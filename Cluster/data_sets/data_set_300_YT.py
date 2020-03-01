@@ -12,44 +12,13 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpim
 import torch
 import torch.nn.functional as F
-
-def thresh(x):
-    return (x!=0)*1
-
-
-def resizeInput(image_file, landmarks, width, height):
-    ori_image = cv2.imread(image_file)
-    height_im, width_im, channels = ori_image.shape
-    # resize image
-    dim = (width, height)
-    resized = cv2.resize(ori_image, dim, interpolation=cv2.INTER_AREA)
-
-    # Modify landmark values
-
-    landmarks = landmarks.astype('float').reshape((int(landmarks.shape[0] / 2), 2))
-    ratio = np.array([(width_im / width), (height_im / height)])
-    landmarks = landmarks / ratio
-    landmarks = np.around(landmarks, decimals=3)
-
-    return resized, landmarks
-
-
-
-def generateHeatmap(center_x, center_y, width, height,rbf_width):
-    x = np.arange( width)
-    y = np.arange( height)
-    xv, yv = np.meshgrid(x, y)
-    width_norm=rbf_width  *np.sqrt(width*height)
-    hm= np.exp(-0.5*((xv-center_x)**2+(yv-center_y)**2)/(width_norm**2))
-    # hm = hm - hm.mean(axis=(0, 1))
-    # but don't normalize variance
-    return hm
+from data_sets.data_set_utils import *
 
 
 class Dataset_300W_YT(Dataset):
     """300W and Youtube Faces datasets"""
 
-    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,rbf_width, which_dataset, landmarks_collapsed=False, max_size= -1):
+    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,rbf_width, which_dataset,force_new_pickle, landmarks_collapsed=False, max_size= -1):
         """
         Args:
             root_dir: Data directory containing both 300W and Youtube Faces directories.
@@ -75,6 +44,7 @@ class Dataset_300W_YT(Dataset):
         self.num_landmarks=num_landmarks
         self.rbf_width=rbf_width
         self.which_dataset=which_dataset
+        self.force_new_pickle=force_new_pickle
         self.landmarks_collapsed=landmarks_collapsed
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
         self.create_dataset()
@@ -104,7 +74,7 @@ class Dataset_300W_YT(Dataset):
             else:
                 raise ValueError
 
-        if os.path.exists(pickle_path):
+        if os.path.exists(pickle_path) and self.force_new_pickle==False:
             print("loading from pickle file")
             data = pickle.load(open(pickle_path, "rb"))
             (self.x, self.y, self.p) = data
@@ -160,12 +130,13 @@ class Dataset_300W_YT(Dataset):
                 number_of_images = len(image_paths)
             else:
                 number_of_images = min(len(image_paths),self.max_size)
-            with tqdm.tqdm(total=number_of_images , file=sys.stdout) as pbar_test:  # ini a progress bar
+            n_updates = min(50, number_of_images)
+            with tqdm.tqdm(total=n_updates, file=sys.stdout) as pbar_test:  # ini a progress bar
                 for i, image_path in enumerate(image_paths):
-
-                    pbar_test.set_description(
-                        "Generate Images")  # update progress bar string output
-                    pbar_test.update(1)  # update progress bar status
+                    if i % int(number_of_images / n_updates) == 0:
+                        pbar_test.set_description(
+                            f"Generate Images {i} of {number_of_images}")  # update progress bar string output
+                        pbar_test.update(1)  # update progress bar status
 
                     if (self.max_size != -1 and len(x) >= self.max_size):
                         break

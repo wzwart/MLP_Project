@@ -63,16 +63,18 @@ if args.dataset_name == 'Youtube':
 
 
 elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset_name == 'Both':
-    if os.path.isdir(args.filepath_to_data_1):
-        filepath_to_data = args.filepath_to_data_1
-        filepath_to_data.replace("sxxxxxxx", username)
-        print(f"No1 {args.filepath_to_data_1} exists")
 
-    elif os.path.isdir(args.filepath_to_data_2):
-        filepath_to_data = args.filepath_to_data_2
-        print(f"No2 {args.filepath_to_data_2} exists")
+    if os.path.isdir(args.filepath_to_data_1.replace("sxxxxxxx", username)):
+        filepath_to_data = args.filepath_to_data_1.replace("sxxxxxxx", username)
+
+        print(f"No1 {filepath_to_data} exists")
+
+    elif os.path.isdir(args.filepath_to_data_2.replace("sxxxxxxx", username)):
+        filepath_to_data = args.filepath_to_data_2.replace("sxxxxxxx", username)
+        print(f"No2 {filepath_to_data} exists")
 
     else:
+
         raise FileExistsError
 
     try:
@@ -99,6 +101,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             num_landmarks=args.num_landmarks,
             rbf_width=args.rbf_width,
             which_dataset=0,
+            force_new_pickle=args.force_new_pickle,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
     elif args.dataset_name == 'Youtube':
@@ -109,6 +112,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             num_landmarks=args.num_landmarks,
             rbf_width=args.rbf_width,
             which_dataset=1,
+            force_new_pickle=args.force_new_pickle,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
     elif args.dataset_name == 'Both':
@@ -119,6 +123,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             num_landmarks=args.num_landmarks,
             rbf_width=args.rbf_width,
             which_dataset=2,
+            force_new_pickle=args.force_new_pickle,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset)
     else:
@@ -139,10 +144,10 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
         criterion = torch.nn.CrossEntropyLoss()
     else:
         if args.landmarks_collapsed:
-            net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=2, bottle_neck_channels=256)
+            net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip)
         else:
             # net = UNet(in_channel=3, out_channel=args.num_landmarks)
-            net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=2, bottle_neck_channels=256)
+            net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip)
         criterion = torch.nn.MSELoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.99)
 
@@ -153,6 +158,7 @@ else:
 conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     experiment_name=args.experiment_name,
                                     num_epochs=args.num_epochs,
+                                    rbf_width=args.rbf_width,
                                     continue_from_epoch=args.continue_from_epoch,
                                     use_tqdm=args.use_tqdm,
                                     data_provider=data_provider,
