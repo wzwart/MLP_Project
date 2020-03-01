@@ -195,16 +195,16 @@ class UNetDict(nn.Module):
         self.out_channel = out_channel
         self.use_skip = use_skip
         # build the network
-        if False:
-            self.contracting_block = self.contracting_block_seq
-            self.bottle_neck = self.bottle_neck_seq
-            self.expansive_block = self.expansive_block_seq
-            self.final_block = self.final_block_seq
-        else:
+        if self.use_skip:
             self.contracting_block = ContractingBlock
             self.bottle_neck = Bottleneck
             self.expansive_block = ExpansiveBlock
             self.final_block = FinalBlock
+        else:
+            self.contracting_block = self.contracting_block_seq
+            self.bottle_neck = self.bottle_neck_seq
+            self.expansive_block = self.expansive_block_seq
+            self.final_block = self.final_block_seq
 
         self.build_module()
 
