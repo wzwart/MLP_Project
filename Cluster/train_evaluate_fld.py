@@ -1,6 +1,9 @@
 import numpy as np
 import os
 import getpass
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 from data_sets import data_providers as data_providers
 from arg_extractor import get_args
 from experiment_builder import ExperimentBuilder
@@ -172,3 +175,26 @@ if args.use_case == "render":
     conv_experiment.render(data=test_data, number_images=args.no_images_to_render, x_y_only=False)
 else:
     experiment_metrics, test_metrics = conv_experiment.run_experiment()  # run experiment and return experiment metrics
+
+
+
+
+currentDirectory = os.getcwd()
+summary = str(currentDirectory) + '/exp_300W_9/result_outputs/summary.csv'
+
+df = pd.read_csv(summary)
+fig = px.line(df)
+fig.add_trace(go.Scatter(x=df['curr_epoch'], y=df['train_loss'],
+                    mode='lines',
+                    name='train_loss'))
+fig.add_trace(go.Scatter(x=df['curr_epoch'], y=df['val_loss'],
+                    mode='lines',
+                    name='val_loss'))
+fig.update_layout(title="Training and Validation Loss Graph",
+    xaxis_title="Epoch",
+    yaxis_title="Loss")
+fig.show()
+graph = str(currentDirectory) + '/exp_300W_9/graphs'
+if not os.path.exists(graph):
+    os.mkdir(graph)
+fig.write_image(graph + args.graph_name)
