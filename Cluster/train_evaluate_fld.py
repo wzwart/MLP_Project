@@ -83,10 +83,10 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
         max_size_dataset = -1
         pass
 
-    width_in = 128
-    height_in = 128
-    width_out = 128
-    height_out = 128
+    width_in = 64
+    height_in = 64
+    width_out = 64
+    height_out = 64
     if args.dataset_name == 'BOE':
         dataset = DatasetBOE(
             root_dir=os.path.join(filepath_to_data),
