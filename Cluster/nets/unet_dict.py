@@ -242,8 +242,10 @@ class UNetDict(nn.Module):
             out = self.layer_dict[f"conv_decode{i}"](out)
             out = self.crop_and_concat(out, all[f"conv_encode{i-1}_out"], crop=False)
         final_layer = self.layer_dict[f"final_layer"](out)
-        outputs = final_layer.permute(0, 2, 3, 1)
-        return outputs
+        out = final_layer.permute(0, 2, 3, 1)
+
+        return out
+
 
     def reset_parameters(self):
         """

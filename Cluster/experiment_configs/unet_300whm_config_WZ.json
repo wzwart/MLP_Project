@@ -1,0 +1,21 @@
+{
+  "dataset_name": "Both",
+  "batch_size": 5,
+  "continue_from_epoch": -1,
+  "seed": 0,
+  "num_epochs": 2,
+  "experiment_name": "exp_300W_9",
+  "use_gpu": true,
+  "use_tqdm": true,
+  "max_size_dataset": 100,
+  "num_landmarks": 5,
+  "landmarks_collapsed": false,
+  "use_case": "train",
+  "no_images_to_render": 5,
+  "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data",
+  "filepath_to_data_2": "../Basic_Detector/data",
+  "rbf_width": 0.07,
+  "force_new_pickle": false
+}
+
+

@@ -23,7 +23,6 @@ else:
 from data_sets.data_set_youtube import Rescale, RandomCrop, Normalize,ToTensor
 
 
-
 class DataProvider(object):
     """Generic data provider."""
 

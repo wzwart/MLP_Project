@@ -71,8 +71,11 @@ class MyTableWidget(QWidget):
 
         self.start_batch_button = QPushButton('Batch')
         self.start_batch_button.clicked.connect(self.sshtunnel.start_batch)
+        self.kill_batch_button = QPushButton('Kill')
+        self.kill_batch_button.clicked.connect(self.sshtunnel.kill_batch)
         self.del_out_button = QPushButton('Del *.out')
         self.del_out_button.clicked.connect(self.sshtunnel.delete_out_files)
+
 
 
         self.layout_active_job = QHBoxLayout()
@@ -95,6 +98,8 @@ class MyTableWidget(QWidget):
         self.layout_task.addWidget(self.open_button)
         self.layout_task.addWidget(self.del_out_button)
         self.layout_task.addWidget(self.start_batch_button)
+        self.layout_task.addWidget(self.kill_batch_button)
+
 
 
         self.stdout_box = QTextEdit()

@@ -63,16 +63,18 @@ if args.dataset_name == 'Youtube':
 
 
 elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset_name == 'Both':
-    if os.path.isdir(args.filepath_to_data_1):
-        filepath_to_data = args.filepath_to_data_1
-        filepath_to_data.replace("sxxxxxxx", username)
-        print(f"No1 {args.filepath_to_data_1} exists")
 
-    elif os.path.isdir(args.filepath_to_data_2):
-        filepath_to_data = args.filepath_to_data_2
-        print(f"No2 {args.filepath_to_data_2} exists")
+    if os.path.isdir(args.filepath_to_data_1.replace("sxxxxxxx", username)):
+        filepath_to_data = args.filepath_to_data_1.replace("sxxxxxxx", username)
+
+        print(f"No1 {filepath_to_data} exists")
+
+    elif os.path.isdir(args.filepath_to_data_2.replace("sxxxxxxx", username)):
+        filepath_to_data = args.filepath_to_data_2.replace("sxxxxxxx", username)
+        print(f"No2 {filepath_to_data} exists")
 
     else:
+
         raise FileExistsError
 
     try:

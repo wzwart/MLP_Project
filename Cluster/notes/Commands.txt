@@ -2,6 +2,8 @@
 #Logging into MLP:
 #First connect to UoE over VPN
 sshpass -p "w*wZ47Ws" ssh -o StrictHostKeyChecking=no -A s1999534@student.ssh.inf.ed.ac.uk
+rsync -azv   -e "ssh -o StrictHostKeyChecking=no -A s1999534@student.ssh.inf.ed.ac.uk ssh" "$remote_path" "$local_path"
+
 
 ssh student.login
 ssh mlp1

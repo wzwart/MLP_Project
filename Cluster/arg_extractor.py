@@ -73,7 +73,7 @@ def get_args():
         args = extract_args_from_json(json_file_path=args.filepath_to_arguments_json_file, existing_args_dict=args)
 
     arg_str = [(str(key), str(value)) for (key, value) in vars(args).items()]
-    print(arg_str)
+
 
     import torch
 
