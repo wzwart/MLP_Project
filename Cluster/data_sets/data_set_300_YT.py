@@ -176,7 +176,7 @@ class Dataset_300W_YT(Dataset):
 
             #self.x, self.y, self.p = shuffle(self.x, self.y, self.p, random_state=0)
             data =(self.x, self.y, self.p)
-            pickle.dump(data, open(pickle_path, "wb"))
+            #pickle.dump(data, open(pickle_path, "wb"))
         self.length=len(self.x)
 
     def get_data(self, which_set):
