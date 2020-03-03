@@ -1,10 +1,10 @@
 {
   "dataset_name": "Both",
   "batch_size": 5,
-  "continue_from_epoch": -1,
+  "continue_from_epoch": 280,
   "seed": 0,
-  "num_epochs": 2,
-  "experiment_name": "exp_Skip_68",
+  "num_epochs": 281,
+  "experiment_name": "exp_null",
   "use_gpu": true,
   "use_tqdm": true,
   "max_size_dataset": -1,
@@ -14,8 +14,12 @@
   "no_images_to_render": 5,
   "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data",
   "filepath_to_data_2": "../Basic_Detector/data",
-  "rbf_width": 0.01,
-  "force_new_pickle": false
+  "rbf_width": 0.03,
+  "force_new_pickle": true,
+  "Hourglass_depth": 4,
+  "Hourglass_bottleneck_channels": 1024,
+  "use_skip": true,
+  "graph_name": "/graph_1.png"
 }
 
 
