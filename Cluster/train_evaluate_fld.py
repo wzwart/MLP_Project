@@ -152,7 +152,7 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
             # net = UNet(in_channel=3, out_channel=args.num_landmarks)
             net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip)
         criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.99)
+    optimizer = torch.optim.Adam(params=net.parameters())
 
 else:
     print("Data Set not supported")
