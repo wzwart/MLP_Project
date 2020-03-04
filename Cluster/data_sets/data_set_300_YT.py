@@ -99,8 +99,6 @@ class Dataset_300W_YT(Dataset):
             return True, (x,y,p)
 
 
-
-
     def create_dataset(self):
         pickle_load_success , data =  self.pickle_load()
         if pickle_load_success:

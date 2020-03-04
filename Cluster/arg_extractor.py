@@ -69,6 +69,8 @@ def get_args():
                         help='Width of the blob')
     parser.add_argument('--force_new_pickle', nargs="?", type=str2bool, default=False,
                         help='Force pickle')
+    parser.add_argument('--depthwise_conv', nargs="?", type=str2bool, default=False,
+                        help='apply depth-wise convolution')
     parser.add_argument('--Hourglass_depth', nargs="?", type=int, default=2,
                         help='Hourglass depth')
     parser.add_argument('--Hourglass_bottleneck_channels', nargs="?", type=int, default=256,

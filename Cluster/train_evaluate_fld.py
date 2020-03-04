@@ -147,10 +147,10 @@ elif args.dataset_name == 'BOE' or args.dataset_name == '300W' or args.dataset_n
         criterion = torch.nn.CrossEntropyLoss()
     else:
         if args.landmarks_collapsed:
-            net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip)
+            net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv)
         else:
             # net = UNet(in_channel=3, out_channel=args.num_landmarks)
-            net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip)
+            net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv)
         criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(params=net.parameters())
 
