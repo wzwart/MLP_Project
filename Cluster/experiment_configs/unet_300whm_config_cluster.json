@@ -19,7 +19,7 @@
   "Hourglass_depth": 2,
   "Hourglass_bottleneck_channels": 256,
   "use_skip": false,
-  "graph_name": "/graph_1.png"
+  "save_model_per_n_epochs": 2
 }
 
 

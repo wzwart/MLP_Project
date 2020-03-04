@@ -3,7 +3,7 @@
   "batch_size": 2,
   "continue_from_epoch": -1,
   "seed": 0,
-  "num_epochs": 500,
+  "num_epochs": 10,
   "experiment_name": "exp_300W_9",
   "use_gpu": true,
   "use_tqdm": true,
@@ -19,7 +19,8 @@
   "Hourglass_depth": 2,
   "Hourglass_bottleneck_channels": 256,
   "use_skip": false,
-  "graph_name": "/graph_1.png"
+  "save_model_per_n_epochs": 2,
+  "experiment_name_graph": ["exp_300W_9"]
 }
 
 

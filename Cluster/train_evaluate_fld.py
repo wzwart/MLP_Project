@@ -161,6 +161,7 @@ else:
 conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     experiment_name=args.experiment_name,
                                     num_epochs=args.num_epochs,
+                                    save_model_per_n_epochs=args.save_model_per_n_epochs,
                                     rbf_width=args.rbf_width,
                                     continue_from_epoch=args.continue_from_epoch,
                                     use_tqdm=args.use_tqdm,
@@ -177,24 +178,3 @@ else:
     experiment_metrics, test_metrics = conv_experiment.run_experiment()  # run experiment and return experiment metrics
 
 
-
-
-currentDirectory = os.getcwd()
-summary = str(currentDirectory) + '/exp_300W_9/result_outputs/summary.csv'
-
-df = pd.read_csv(summary)
-fig = px.line(df)
-fig.add_trace(go.Scatter(x=df['curr_epoch'], y=df['train_loss'],
-                    mode='lines',
-                    name='train_loss'))
-fig.add_trace(go.Scatter(x=df['curr_epoch'], y=df['val_loss'],
-                    mode='lines',
-                    name='val_loss'))
-fig.update_layout(title="Training and Validation Loss Graph",
-    xaxis_title="Epoch",
-    yaxis_title="Loss")
-fig.show()
-graph = str(currentDirectory) + '/exp_300W_9/graphs'
-if not os.path.exists(graph):
-    os.mkdir(graph)
-fig.write_image(graph + args.graph_name)

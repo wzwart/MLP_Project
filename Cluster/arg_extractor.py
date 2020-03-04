@@ -43,6 +43,8 @@ def get_args():
                         help='Weight decay to use for Adam')
     parser.add_argument('--experiment_name', nargs="?", type=str, default="exp_1",
                         help='Experiment name - to be used for building the experiment folder')
+    parser.add_argument('--experiment_name_graph', nargs="+", type=str, default="exp_1",
+                        help='Experiment name - to be used for building the experiment folder')
     parser.add_argument('--use_gpu', nargs="?", type=str2bool, default=False,
                         help='A flag indicating whether we will use GPU acceleration or not')
     parser.add_argument('--use_tqdm', nargs="?", type=str2bool, default=False,
@@ -73,8 +75,8 @@ def get_args():
                         help='hourglass bottleneck channels')
     parser.add_argument('--use_skip', nargs="?", type=str2bool, default=False,
                         help='use skip connections')
-    parser.add_argument('--graph_name', nargs="?", type=str, default="/latest_graph.png",
-                        help='name of graph')
+    parser.add_argument('--save_model_per_n_epochs', nargs="?", type=int, default=1,
+                        help='How often save model')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:
