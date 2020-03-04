@@ -13,6 +13,7 @@ import matplotlib.image as mpim
 import torch
 import torch.nn.functional as F
 from data_sets.data_set_utils import *
+import pickle
 
 
 class Dataset_300W_YT(Dataset):
@@ -52,31 +53,57 @@ class Dataset_300W_YT(Dataset):
     def __len__(self):
         return self.length
 
-    def create_dataset(self):
-        import pickle
+    def set_pickle_path(self):
+        names_lookup={0:"300W", 1:"Youtube", 2:"300W_Youtube"}
+        self.pickle_path = os.path.join(self.input_path, f"pickle_{names_lookup[self.which_dataset]}_{self.max_size}_{self.num_landmarks}_col_XX.p")
         if self.landmarks_collapsed:
-            if(self.which_dataset == 0):
-                pickle_path = os.path.join(self.input_path, f"pickle_300W_{self.max_size}_{self.num_landmarks}_col.p")
-            elif(self.which_dataset == 1):
-                pickle_path = os.path.join(self.input_path, f"pickle_Youtube_{self.max_size}_{self.num_landmarks}_col.p")
-            elif (self.which_dataset == 2):
-                pickle_path = os.path.join(self.input_path, f"pickle_300W_Youtube_{self.max_size}_{self.num_landmarks}_col.p")
-            else:
-                raise ValueError
+            self.pickle_path=self.pickle_path.replace(".p","_col.p")
 
+    def pickle_save(self, x,y,p):
+        from math import ceil
+        self.set_pickle_path()
+        import string
+        S= string.ascii_uppercase
+        n=x.shape[0]
+        n_chunks = 5
+        chunk_size = int(ceil(n/n_chunks))
+        path_names = [self.pickle_path.replace("XX", S[i]) for i in range(n_chunks)]
+        for i in range(n_chunks):
+            first_idx = i*chunk_size
+            last_idx = min((i+1)*chunk_size,n+1)
+            pickle.dump((x[first_idx:last_idx], y[first_idx:last_idx], p[first_idx:last_idx]), open(path_names[i], "wb"))
+
+    def pickle_load(self):
+
+        self.set_pickle_path()
+        import glob
+        files = glob.glob(self.pickle_path.replace("XX", '*'))
+        if self.force_new_pickle:
+            for file in files:
+                os.remove(file)
+            return False, None
+        elif len(files)==0:
+            return False, None
         else:
-            if (self.which_dataset == 0):
-                pickle_path = os.path.join(self.input_path, f"pickle_300W_{self.max_size}_{self.num_landmarks}.p")
-            elif (self.which_dataset == 1):
-                pickle_path = os.path.join(self.input_path, f"pickle_Youtube_{self.max_size}_{self.num_landmarks}.p")
-            elif (self.which_dataset == 2):
-                pickle_path = os.path.join(self.input_path, f"pickle_300W_Youtube_{self.max_size}_{self.num_landmarks}.p")
-            else:
-                raise ValueError
+            x=[]
+            y=[]
+            p=[]
+            for file in files:
+                (x_chunk,y_chunk,p_chunk) = pickle.load(open(file, "rb"))
+                x.append(x_chunk)
+                y.append(y_chunk)
+                p.append(p_chunk)
+            x = np.vstack(x)
+            y = np.vstack(y)
+            p = np.vstack(p)
+            return True, (x,y,p)
 
-        if os.path.exists(pickle_path) and self.force_new_pickle==False:
-            print("loading from pickle file")
-            data = pickle.load(open(pickle_path, "rb"))
+
+
+
+    def create_dataset(self):
+        pickle_load_success , data =  self.pickle_load()
+        if pickle_load_success:
             (self.x, self.y, self.p) = data
         else:
             if (self.which_dataset == 0):
@@ -132,9 +159,9 @@ class Dataset_300W_YT(Dataset):
             else:
                 number_of_images = min(len(image_paths),self.max_size)
             n_updates = min(50, number_of_images)
-            with tqdm.tqdm(total=n_updates, file=sys.stdout) as pbar_test:  # ini a progress bar
+            with tqdm.tqdm(total=n_updates , file=sys.stdout) as pbar_test:  # ini a progress bar
                 for i, image_path in enumerate(image_paths):
-                    if i % int(number_of_images / n_updates) == 0:
+                    if i % (number_of_images//n_updates) == 0:
                         pbar_test.set_description(
                             f"Generate Images {i} of {number_of_images}")  # update progress bar string output
                         pbar_test.update(1)  # update progress bar status
@@ -174,9 +201,7 @@ class Dataset_300W_YT(Dataset):
             self.y= np.array(self.y)
             self.p = np.array(self.p)
 
-            #self.x, self.y, self.p = shuffle(self.x, self.y, self.p, random_state=0)
-            data =(self.x, self.y, self.p)
-            #pickle.dump(data, open(pickle_path, "wb"))
+            self.pickle_save(self.x,self.y,self.p)
         self.length=len(self.x)
 
     def get_data(self, which_set):
