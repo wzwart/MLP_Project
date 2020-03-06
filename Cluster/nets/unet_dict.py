@@ -292,4 +292,8 @@ class UNetDict(nn.Module):
         """
         Re-initialize the network parameters.
         """
+        # with torch.no_grad():
+        #     self.layer_dict["bottleneck"].layer_dict["conv_1"].weight[0,0,:,:] *=  torch.Tensor([[1 ,0, -1],[2, 0 ,-2], [1, 0 ,-1]])
+        # print (self.layer_dict["bottleneck"].layer_dict["conv_1"].weight[0,0,1,1])
+        # print (type(self.layer_dict["bottleneck"].layer_dict["conv_1"].weight[0,0,1,1]))
         return

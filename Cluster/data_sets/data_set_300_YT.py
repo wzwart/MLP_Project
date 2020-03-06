@@ -55,7 +55,7 @@ class Dataset_300W_YT(Dataset):
 
     def set_pickle_path(self):
         names_lookup={0:"300W", 1:"Youtube", 2:"300W_Youtube"}
-        self.pickle_path = os.path.join(self.input_path, f"pickle_{names_lookup[self.which_dataset]}_{self.max_size}_{self.num_landmarks}_col_XX.p")
+        self.pickle_path = os.path.join(self.input_path, f"pickle_{names_lookup[self.which_dataset]}_{self.max_size}_{self.num_landmarks}_XX.p")
         if self.landmarks_collapsed:
             self.pickle_path=self.pickle_path.replace(".p","_col.p")
 

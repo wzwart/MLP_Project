@@ -311,6 +311,11 @@ class ExperimentBuilder(nn.Module):
                         print(f'{which_set.capitalize().ljust(6)} epoch {epoch_idx}, Batch: {idx + 1}, Avg. Loss: {running_loss / update_interval:.4f}  NME: {running_nme / update_interval:.4f}')
                         running_loss = 0.0
                         running_nme = 0.0
+        # with torch.no_grad():
+        #     self.model.layer_dict["bottleneck"].layer_dict["conv_1"].weight[0,0,:,:] *=  torch.Tensor([[1 ,0, 1],[1, 0 ,1], [1, 0 ,1]]).to(device=self.device)
+        #
+        # print(self.model.layer_dict["bottleneck"].layer_dict["conv_1"].weight.shape)
+        # print(self.model.layer_dict["bottleneck"].layer_dict["conv_1"].weight[0,0,:,:])
         return current_epoch_losses
 
     def load_model(self, model_save_dir, model_save_name, model_idx):

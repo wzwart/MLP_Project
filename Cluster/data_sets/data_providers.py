@@ -149,65 +149,65 @@ class DataProvider(object):
         return inputs_batch, targets_batch, points_batch
 
 
-class DataProviderYoutube(DataProvider):
-    """Data provider for Youtube"""
+# class DataProviderYoutube(DataProvider):
+#     """Data provider for Youtube"""
+#
+#     def __init__(self, which_set='train',
+#                  filepath_to_data="",
+#                  batch_size=100, max_num_batches=-1,
+#                  max_size=None,
+#                  shuffle_order=True, rng=None):
+#         """Create a new MNIST data provider object.
+#
+#         Args:
+#             which_set: One of 'train', 'valid' or 'eval'. Determines which
+#                 portion of the MNIST data this object should provide.
+#             batch_size (int): Number of data points to include in each batch.
+#             max_num_batches (int): Maximum number of batches to iterate over
+#                 in an epoch. If `max_num_batches * batch_size > num_data` then
+#                 only as many batches as the data can be split into will be
+#                 used. If set to -1 all of the data will be used.
+#             shuffle_order (bool): Whether to randomly permute the order of
+#                 the data before each epoch.
+#             rng (RandomState): A seeded random number generator.
+#         """
+#         # check a valid which_set was provided
+#         assert which_set in ['train', 'valid', 'test'], (
+#             'Expected which_set to be either train, valid or eval. '
+#             'Got {0}'.format(which_set)
+#         )
+#         self.which_set = which_set
+#         # construct path to data using os.path.join to ensure the correct path
+#         # separator for the current platform / OS is used
+#         # MLP_DATA_DIR environment variable should point to the data directory
+#
+#         data_transform = transforms.Compose([Rescale(250),
+#                                              RandomCrop(224),
+#                                              Normalize(),
+#                                              ToTensor()])
+#         assert (data_transform is not None), 'Define a data_transform'
+#
+#         internal_name={"train":"training","valid":"test","test":"test"}
+#
+#         transformed_dataset = DatasetYoutube(csv_file=os.path.join(filepath_to_data, '{0}_frames_keypoints.csv'.format(internal_name[which_set])),
+#                                              root_dir=os.path.join(filepath_to_data ,internal_name[which_set]),
+#                                              max_size= max_size,
+#                                              transform=data_transform)
+#         inputs, targets = transformed_dataset.get_data()
+#         # pass the loaded data to the parent class __init__
+#         super(DataProviderYoutube, self).__init__(
+#             inputs, targets, batch_size, max_num_batches, shuffle_order, rng)
+#
+#     def __len__(self):
+#         return self.num_batches
+#
+#     def next(self):
+#         """Returns next data batch or raises `StopIteration` if at end."""
+#         inputs_batch, targets_batch = super(DataProviderYoutube, self).next()
+#         return inputs_batch, targets_batch
+#
 
-    def __init__(self, which_set='train',
-                 filepath_to_data="",
-                 batch_size=100, max_num_batches=-1,
-                 max_size=None,
-                 shuffle_order=True, rng=None):
-        """Create a new MNIST data provider object.
-
-        Args:
-            which_set: One of 'train', 'valid' or 'eval'. Determines which
-                portion of the MNIST data this object should provide.
-            batch_size (int): Number of data points to include in each batch.
-            max_num_batches (int): Maximum number of batches to iterate over
-                in an epoch. If `max_num_batches * batch_size > num_data` then
-                only as many batches as the data can be split into will be
-                used. If set to -1 all of the data will be used.
-            shuffle_order (bool): Whether to randomly permute the order of
-                the data before each epoch.
-            rng (RandomState): A seeded random number generator.
-        """
-        # check a valid which_set was provided
-        assert which_set in ['train', 'valid', 'test'], (
-            'Expected which_set to be either train, valid or eval. '
-            'Got {0}'.format(which_set)
-        )
-        self.which_set = which_set
-        # construct path to data using os.path.join to ensure the correct path
-        # separator for the current platform / OS is used
-        # MLP_DATA_DIR environment variable should point to the data directory
-
-        data_transform = transforms.Compose([Rescale(250),
-                                             RandomCrop(224),
-                                             Normalize(),
-                                             ToTensor()])
-        assert (data_transform is not None), 'Define a data_transform'
-
-        internal_name={"train":"training","valid":"test","test":"test"}
-
-        transformed_dataset = DatasetYoutube(csv_file=os.path.join(filepath_to_data, '{0}_frames_keypoints.csv'.format(internal_name[which_set])),
-                                             root_dir=os.path.join(filepath_to_data ,internal_name[which_set]),
-                                             max_size= max_size,
-                                             transform=data_transform)
-        inputs, targets = transformed_dataset.get_data()
-        # pass the loaded data to the parent class __init__
-        super(DataProviderYoutube, self).__init__(
-            inputs, targets, batch_size, max_num_batches, shuffle_order, rng)
-
-    def __len__(self):
-        return self.num_batches
-
-    def next(self):
-        """Returns next data batch or raises `StopIteration` if at end."""
-        inputs_batch, targets_batch = super(DataProviderYoutube, self).next()
-        return inputs_batch, targets_batch
-
-
-class DataProviderBOE(DataProvider):
+class DataProviderFLD(DataProvider):
     """Data provider for 300W Faces."""
 
     def __init__(self, dataset, which_set='train',
@@ -236,7 +236,7 @@ class DataProviderBOE(DataProvider):
         self.data_set=dataset
         inputs, targets, points = self.data_set.get_data(self.which_set)
         # pass the loaded data to the parent class __init__
-        super(DataProviderBOE, self).__init__(
+        super(DataProviderFLD, self).__init__(
             inputs, targets, points, batch_size, max_num_batches, shuffle_order, rng)
 
     def __len__(self):
@@ -244,7 +244,7 @@ class DataProviderBOE(DataProvider):
 
     def next(self):
         """Returns next data batch or raises `StopIteration` if at end."""
-        inputs_batch, targets_batch, points_batch = super(DataProviderBOE, self).next()
+        inputs_batch, targets_batch, points_batch = super(DataProviderFLD, self).next()
         return inputs_batch, targets_batch, points_batch
 
     def render(self,x,y,p,out,number_images):
