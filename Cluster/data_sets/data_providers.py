@@ -6,7 +6,7 @@ data points.
 """
 from __future__ import print_function
 
-DEFAULT_SEED = 20112018
+DEFAULT_SEED = 0
 import os
 import os.path
 import numpy as np
