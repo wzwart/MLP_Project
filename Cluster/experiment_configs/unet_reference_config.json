@@ -15,6 +15,7 @@
   "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data",
   "filepath_to_data_2": "../Basic_Detector/data",
   "rbf_width": 0.07,
+  "prune_prob": 0,
   "force_new_pickle": false,
   "Hourglass_depth": 2,
   "Hourglass_bottleneck_channels": 256,

@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from math import gcd
+from nets.pruner import Pruner
+
 
 class ContractingBlock(nn.Module):
 
@@ -13,6 +15,7 @@ class ContractingBlock(nn.Module):
         self.kernel_size=kernel_size
         self.layer_dict = nn.ModuleDict()
         self.build_module()
+
 
     def build_module(self):
         if self.depthwise_conv:
@@ -224,7 +227,7 @@ class UNetDict(nn.Module):
         )
         return block
 
-    def __init__(self, in_channel, out_channel, hour_glass_depth, bottle_neck_channels,use_skip, depthwise_conv=False):
+    def __init__(self, in_channel, out_channel, hour_glass_depth, bottle_neck_channels,use_skip, prune_prob=0, depthwise_conv=False):
         super(UNetDict, self).__init__()
         # Encode
         self.hour_glass_depth=hour_glass_depth
@@ -234,6 +237,7 @@ class UNetDict(nn.Module):
         self.out_channel = out_channel
         self.use_skip = use_skip
         self.depthwise_conv=depthwise_conv
+        self.prune_prob=prune_prob
         # build the network
         if self.use_skip:
             self.contracting_block = ContractingBlock
@@ -247,6 +251,8 @@ class UNetDict(nn.Module):
             self.final_block = self.final_block_seq
 
         self.build_module()
+        if prune_prob !=0:
+            self.pruner=Pruner(self.layer_dict, self.prune_prob)
 
     def build_module(self):
         self.layer_dict[f"conv_encode1"]  = self.contracting_block(in_channels=self.in_channel, out_channels=self.bottle_neck_channels//2**(self.hour_glass_depth), depthwise_conv=self.depthwise_conv)

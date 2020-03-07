@@ -67,6 +67,8 @@ def get_args():
                         help='')
     parser.add_argument('--rbf_width', nargs="?", type=float, default=0.07,
                         help='Width of the blob')
+    parser.add_argument('--prune_prob', nargs="?", type=float, default=0.0,
+                        help='Probability of a node being pruned')
     parser.add_argument('--force_new_pickle', nargs="?", type=str2bool, default=False,
                         help='Force pickle')
     parser.add_argument('--depthwise_conv', nargs="?", type=str2bool, default=False,

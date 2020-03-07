@@ -17,7 +17,7 @@ from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, save_model_per_n_epochs, rbf_width, data_provider,train_data, val_data,
-                 test_data, use_gpu, criterion, optimizer, use_tqdm=True, continue_from_epoch=-1):
+                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -48,6 +48,7 @@ class ExperimentBuilder(nn.Module):
         self.criterion=criterion.to(self.device)
         self.continue_from_epoch=continue_from_epoch
         self.data_provider=data_provider
+        self.prune_prob=prune_prob
 
 
         try:
@@ -221,7 +222,8 @@ class ExperimentBuilder(nn.Module):
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
-
+        if self.prune_prob!=0:
+            self.model.pruner.prune(self.device)
         self.optimizer.step()  # update network parameters
         # nme=2
         nme = self.calc_nme(out, p)
@@ -451,7 +453,6 @@ class ExperimentBuilder(nn.Module):
                 else:
                     loss_in = out
                     loss_target = y
-
                 loss = self.criterion(torch.Tensor(loss_in).float().to(device=self.device), torch.Tensor(loss_target).float().to(device=self.device))
                 print(loss)
                 out = out.detach().cpu().numpy()  # forward the data in the model

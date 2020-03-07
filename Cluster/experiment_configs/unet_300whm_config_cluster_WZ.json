@@ -11,6 +11,8 @@
   "num_landmarks": 5,
   "landmarks_collapsed": false,
   "use_case": "train",
+  "prune_prob": 0.5,
+
   "no_images_to_render": 5,
   "filepath_to_data_1": "/home/sxxxxxxx/mlpractical/data",
   "filepath_to_data_2": "../Basic_Detector/data",

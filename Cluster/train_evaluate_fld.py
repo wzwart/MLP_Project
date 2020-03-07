@@ -92,10 +92,10 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
     data_provider=train_data
 
     if args.landmarks_collapsed:
-        net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv)
+        net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv, prune_prob=args.prune_prob)
     else:
         # net = UNet(in_channel=3, out_channel=args.num_landmarks)
-        net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv)
+        net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv, prune_prob=args.prune_prob)
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(params=net.parameters())
 
@@ -114,6 +114,7 @@ conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     train_data=train_data, val_data=val_data,
                                     test_data=test_data,
                                     criterion=criterion,
+                                    prune_prob=args.prune_prob,
                                     optimizer=optimizer
                                     )  # build an experiment object
 
