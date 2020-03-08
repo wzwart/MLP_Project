@@ -17,6 +17,8 @@ rng = np.random.RandomState(seed=args.seed)  # set the seeds for the experiment
 import torch
 
 torch.manual_seed(seed=args.seed)  # sets pytorch's seed
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 username = getpass.getuser()
 username = str(username)
 if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset_name == 'Both':
