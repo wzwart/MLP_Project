@@ -229,6 +229,7 @@ class Dataset_300W_YT(Dataset):
         else:
             no_cols = 2
         fig, ax = plt.subplots(nrows=number_images, ncols=no_cols, figsize=(18, 3 * number_images))
+        #fig, ax = plt.subplots(nrows=number_images, ncols=3, figsize=(18, 3 * number_images))
         nme = 0
         count = 0
 
@@ -261,6 +262,8 @@ class Dataset_300W_YT(Dataset):
             ax[row_num][0].axis('off')
             ax[row_num][no_cols-1].imshow(y_img+bw_image)
             ax[row_num][no_cols-1].axis('off')
+            #ax[row_num][3 - 1].imshow(y_img + bw_image)
+            #ax[row_num][3-1].axis('off')
 
             #print("OUT {}".format(out.shape))
             #print(x_img.shape)
@@ -292,9 +295,14 @@ class Dataset_300W_YT(Dataset):
                     #print(p_img[i])
                     cv2.circle(cross_corr.numpy()[0][0], (int(index_j), int(index_i)), 2, (0, 255, 0), -1)
                     cv2.circle(cross_corr.numpy()[0][0], (int(p_img[i][0]), int(p_img[i][1])), 2, (0, 0, 255), -1)
+                    if(i==0):
+                        sum_img = cross_corr.numpy()[0][0]
+                    else:
+                        sum_img += cross_corr.numpy()[0][0]
                     ax[row_num][i+1].imshow(cross_corr.numpy()[0][0]+np.array([np.mean(x_img, axis=2)])[0])
                     ax[row_num][i+1].axis('off')
-
+                #ax[row_num][1].imshow(sum_img + np.array([np.mean(x_img, axis=2)])[0])
+                #ax[row_num][1].axis('off')
                 nme += self.NME(p_img,predicted)
                 print(predicted)
                 count += 1
