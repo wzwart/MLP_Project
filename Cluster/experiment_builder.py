@@ -181,11 +181,11 @@ class ExperimentBuilder(nn.Module):
         Y = A_max // width
         y_np = Y.detach().cpu().numpy().reshape(batch_size,n_landmarks)
         # combine into 2d points
-        p_pred= np.array([x_np,y_np]).transpose(1,2,0)
+        p_pred= np.array([y_np,x_np]).transpose(1,2,0)
         # calulate errors in output pixel scale, i.e. this is not normalized
         errors= (p-p_pred)**2
         # normalize
-        return np.sqrt(np.sum(errors))/(n_landmarks*batch_size)
+        return np.sqrt(np.sum(errors)/(n_landmarks*batch_size))
 
     def run_train_iter(self, x, y, p):
         """

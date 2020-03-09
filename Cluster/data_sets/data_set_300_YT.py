@@ -224,6 +224,7 @@ class Dataset_300W_YT(Dataset):
         colors= np.asarray(set1.colors)
         no_colors=colors.shape[0]
         no_landmarks=y.shape[3]
+
         if type(out) != type(None):
             no_cols = 2+no_landmarks
         else:
