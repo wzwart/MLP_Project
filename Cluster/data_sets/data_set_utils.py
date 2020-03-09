@@ -14,7 +14,7 @@ def resizeInput(image_file, landmarks, width, height):
     landmarks = landmarks.astype('float').reshape((int(landmarks.shape[0] / 2), 2))
     ratio = np.array([(width_im / width), (height_im / height)])
     landmarks = landmarks / ratio
-    landmarks = np.around(landmarks, decimals=3)
+    #landmarks = np.around(landmarks, decimals=3)
 
     return resized, landmarks
 
