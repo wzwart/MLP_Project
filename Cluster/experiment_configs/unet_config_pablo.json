@@ -1,9 +1,9 @@
 {
   "dataset_name": "Both",
   "batch_size": 5,
-  "continue_from_epoch": -2,
+  "continue_from_epoch": -1,
   "seed": 0,
-  "num_epochs": 700,
+  "num_epochs": 500,
   "experiment_name": "exp_prune_0.7",
   "use_gpu": true,
   "use_tqdm": true,
