@@ -4,7 +4,6 @@
 #SBATCH --partition=Teach-Interactive
 #SBATCH --gres=gpu:1
 #SBATCH --mem=15000  # memory in Mb
-#SBATCH --time=1-00:00:00
 
 export CUDA_HOME=/opt/cuda-9.0.176.1/
 
@@ -33,4 +32,4 @@ export DATASET_DIR=${TMP}/datasets/
 
 source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
-python train_evaluate_fld.py --filepath_to_arguments_json_file experiment_configs/unet_300whm_config_cluster_pablo.json
+python train_evaluate_fld.py --filepath_to_arguments_json_file experiment_configs/unet_config_pablo.json
