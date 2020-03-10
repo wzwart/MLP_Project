@@ -117,6 +117,7 @@ conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     test_data=test_data,
                                     criterion=criterion,
                                     prune_prob=args.prune_prob,
+                                    patience=args.patience,
                                     optimizer=optimizer
                                     )  # build an experiment object
 

@@ -17,7 +17,7 @@ from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, save_model_per_n_epochs, rbf_width, data_provider,train_data, val_data,
-                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, use_tqdm=True, continue_from_epoch=-1):
+                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, patience=-1, use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -49,6 +49,8 @@ class ExperimentBuilder(nn.Module):
         self.continue_from_epoch=continue_from_epoch
         self.data_provider=data_provider
         self.prune_prob=prune_prob
+        self.patience = patience
+        self.patience_counter = patience
 
 
         try:
@@ -347,8 +349,10 @@ class ExperimentBuilder(nn.Module):
             current_epoch_losses = self.run_epoch(epoch_idx, current_epoch_losses, "val")
             val_mean_loss = np.mean(current_epoch_losses['val_loss'])
             if val_mean_loss < self.best_val_model_loss:  # if current epoch's mean val acc is greater than the saved best val acc then
+                self.patience_counter = self.patience
                 self.best_val_model_loss = val_mean_loss  # set the best val model acc to be current epoch's val accuracy
                 self.best_val_model_idx = epoch_idx  # set the experiment-wise best val idx to be the current epoch's idx
+
             for key, value in current_epoch_losses.items():
                 total_losses[key].append(np.mean(value))
                 # get mean of all metrics of current epoch metrics dict,
@@ -375,15 +379,23 @@ class ExperimentBuilder(nn.Module):
                 self.save_model(model_save_dir=self.experiment_saved_models,
                                 # save model and best val idx and best val acc, using the model dir, model name and model idx
                                 model_save_name="train_model", model_idx=epoch_idx, state=self.state)
+            if epoch_idx == self.best_val_model_idx:
+                self.save_model(model_save_dir=self.experiment_saved_models,
+                                # save model and best val idx and best val acc, using the model dir, model name and model idx
+                                model_save_name="train_model", model_idx='best', state=self.state)
+            else:
+                self.patience_counter -= 1
+                if(self.patience_counter == 0):
+                     break
             self.save_model(model_save_dir=self.experiment_saved_models,
                             # save model and best val idx and best val acc, using the model dir, model name and model idx
                             model_save_name="train_model", model_idx='latest', state=self.state)
 
         print("Generating test set evaluation metrics")
-        if epoch_idx % self.save_model_per_n_epochs == 0:
-            self.load_model(model_save_dir=self.experiment_saved_models, model_idx=self.best_val_model_idx,
-                            # load best validation model
-                            model_save_name="train_model")
+        self.load_model(model_save_dir=self.experiment_saved_models, model_idx='best',
+                        # load best validation model
+                        model_save_name="train_model")
+
         current_epoch_losses = {"test_nme": [], "test_loss": []}  # initialize a statistics dict
         print(self.best_val_model_idx)
         current_epoch_losses = self.run_epoch(current_epoch_losses=current_epoch_losses,epoch_idx="-", which_set="test")

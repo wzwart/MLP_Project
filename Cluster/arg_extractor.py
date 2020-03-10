@@ -81,6 +81,8 @@ def get_args():
                         help='use skip connections')
     parser.add_argument('--save_model_per_n_epochs', nargs="?", type=int, default=1,
                         help='How often save model')
+    parser.add_argument('--patience', nargs="?", type=int, default=-1,
+                        help='Patience for early stopping')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:

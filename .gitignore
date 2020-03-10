@@ -31,6 +31,11 @@ Cluster/script_utils/pw.sh
 UNet/__pycache__/
 UNet/.idea/
 Cluster/exp_*/saved_models
+Cluster/exp_Both/
+Cluster/exp_null/
+Cluster/exp_Skip/
+Cluster/exp_debug_nme/
+Cluster/exp_baseline_deterministic/
 
 *.out
 log.log
