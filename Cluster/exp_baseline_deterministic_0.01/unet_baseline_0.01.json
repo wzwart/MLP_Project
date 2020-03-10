@@ -1,0 +1,28 @@
+{
+  "dataset_name": "Both",
+  "batch_size": 5,
+  "continue_from_epoch": -1,
+  "seed": 0,
+  "num_epochs": 500,
+  "experiment_name": "exp_baseline_deterministic_0.1",
+  "use_gpu": true,
+  "use_tqdm": true,
+  "max_size_dataset": -1,
+  "num_landmarks": 68,
+  "landmarks_collapsed": false,
+  "use_case": "train",
+  "no_images_to_render": 5,
+  "filepath_to_data_2": "/home/sxxxxxxx/mlpractical/data",
+  "filepath_to_data_1": "../Basic_Detector/data",
+  "rbf_width": 0.03,
+  "prune_prob": 0,
+  "force_new_pickle": false,
+  "Hourglass_depth": 4,
+  "Hourglass_bottleneck_channels": 1024,
+  "use_skip": true,
+  "depthwise_conv": false,
+  "save_model_per_n_epochs": 20,
+  "experiment_name_graph": ["exp_baseline_deterministic_0.1"]
+}
+
+
