@@ -99,7 +99,7 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
         # net = UNet(in_channel=3, out_channel=args.num_landmarks)
         net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv, prune_prob=args.prune_prob)
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(params=net.parameters())
+    optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001)
 
 else:
     print("Data Set not supported")
