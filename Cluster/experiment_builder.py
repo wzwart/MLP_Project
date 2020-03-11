@@ -162,7 +162,7 @@ class ExperimentBuilder(nn.Module):
         self.hm_kernel = torch.Tensor(hm_kernel).float().to(self.device)
 
 
-    def calc_nme(self, out, p):
+    def calc_nme(self, out, p, n):
         height = out.shape[1]
         width = out.shape[2]
         n_landmarks = out.shape[3]
@@ -189,7 +189,7 @@ class ExperimentBuilder(nn.Module):
         # normalize
         return np.sqrt(np.sum(errors)/(n_landmarks*batch_size))
 
-    def run_train_iter(self, x, y, p):
+    def run_train_iter(self, x, y, p, n):
         """
         Receives the inputs and targets for the model and runs a training iteration. Returns loss and accuracy metrics.
         :param x: The inputs to the model. A numpy array of shape batch_size, channels, height, width
@@ -228,12 +228,12 @@ class ExperimentBuilder(nn.Module):
             self.model.pruner.prune(self.device)
         self.optimizer.step()  # update network parameters
         # nme=2
-        nme = self.calc_nme(out, p)
+        nme = self.calc_nme(out, p, n)
 
 
         return loss.data.detach().cpu().numpy(), nme
 
-    def run_evaluation_iter(self, x, y, p):
+    def run_evaluation_iter(self, x, y, p, n):
         """
         Receives the inputs and targets for the model and runs an evaluation iterations. Returns loss and accuracy metrics.
         :param x: The inputs to the model. A numpy array of shape batch_size, channels, height, width
@@ -260,7 +260,7 @@ class ExperimentBuilder(nn.Module):
 
         loss = self.criterion(loss_in, loss_target)
 
-        nme = self.calc_nme(out, p)
+        nme = self.calc_nme(out, p, n)
         #nme = self.compute_nme(out, p)
 
         return loss.data.detach().cpu().numpy(), nme
@@ -298,11 +298,11 @@ class ExperimentBuilder(nn.Module):
         with tqdm.tqdm(total=len(data), file=f) as pbar_train:  # create a progress bar for training
             running_loss=0.0
             running_nme=0.0
-            for idx, (x,y,p)  in enumerate(data):  # get data batches
+            for idx, (x,y,p,n)  in enumerate(data):  # get data batches
                 if which_set=="train":
-                    loss, nme = self.run_train_iter(x=x, y=y, p=p)  # take a training iter step
+                    loss, nme = self.run_train_iter(x=x, y=y, p=p, n=n)  # take a training iter step
                 else:
-                    loss, nme = self.run_evaluation_iter(x=x, y=y, p=p)
+                    loss, nme = self.run_evaluation_iter(x=x, y=y, p=p, n=n)
                 current_epoch_losses[loss_key].append(loss)  # add current iter loss to the train loss list
                 current_epoch_losses[nme_key].append(nme)  # add current iter acc to the train acc list
                 if self.use_tqdm:
@@ -442,18 +442,20 @@ class ExperimentBuilder(nn.Module):
                 raise ValueError(f"Can not load from epoch {self.continue_from_epoch}")
 
             self.model.eval()
-        for (x,y,p) in data: #is only executed once, data can only be accessed through an enumerator
+        for (x,y,p,n) in data: #is only executed once, data can only be accessed through an enumerator
             if type(x) is np.ndarray:
 
                 x_net =  torch.Tensor(x).float()[:number_images].to(device=self.device)
                 x_img = x[:number_images].copy()
                 y_img = y[:number_images].copy()
                 p_img = p[:number_images].copy()
+                n_img = n[:number_images].copy()
             else:
                 x_net=x.copy()
                 x_img=x.detach().cpu().numpy()
                 y_img=y.detach().cpu().numpy()
                 p_img=p.detach().cpu().numpy()
+                n_img = n.detach().cpu().numpy()
             if  x_y_only:
                 out=None
             else:
@@ -470,5 +472,5 @@ class ExperimentBuilder(nn.Module):
                 out = out.detach().cpu().numpy()  # forward the data in the model
 
             break
-        self.data_provider.render(x=x_img,y=y_img,p=p_img,out=out,number_images=number_images)
+        self.data_provider.render(x=x_img,y=y_img,p=p_img,n=n_img,out=out,number_images=number_images)
 

@@ -59,7 +59,7 @@ class Dataset_300W_YT(Dataset):
         if self.landmarks_collapsed:
             self.pickle_path=self.pickle_path.replace(".p","_col.p")
 
-    def pickle_save(self, x,y,p):
+    def pickle_save(self, x,y,p,norm):
         from math import ceil
         self.set_pickle_path()
         import string
@@ -71,7 +71,7 @@ class Dataset_300W_YT(Dataset):
         for i in range(n_chunks):
             first_idx = i*chunk_size
             last_idx = min((i+1)*chunk_size,n+1)
-            pickle.dump((x[first_idx:last_idx], y[first_idx:last_idx], p[first_idx:last_idx]), open(path_names[i], "wb"))
+            pickle.dump((x[first_idx:last_idx], y[first_idx:last_idx], p[first_idx:last_idx], norm[first_idx:last_idx]), open(path_names[i], "wb"))
 
     def pickle_load(self):
 
@@ -88,21 +88,25 @@ class Dataset_300W_YT(Dataset):
             x=[]
             y=[]
             p=[]
+            n=[]
             for file in files:
-                (x_chunk,y_chunk,p_chunk) = pickle.load(open(file, "rb"))
+                (x_chunk,y_chunk,p_chunk,n_chunk) = pickle.load(open(file, "rb"))
                 x.append(x_chunk)
                 y.append(y_chunk)
                 p.append(p_chunk)
+                n.append(n_chunk)
             x = np.vstack(x)
             y = np.vstack(y)
             p = np.vstack(p)
-            return True, (x,y,p)
+            n = np.hstack(n)
+
+            return True, (x,y,p,n)
 
 
     def create_dataset(self):
         pickle_load_success , data =  self.pickle_load()
         if pickle_load_success:
-            (self.x, self.y, self.p) = data
+            (self.x, self.y, self.p, self.n) = data
         else:
             if (self.which_dataset == 0):
                 path = os.path.join(self.input_path,"300W/300W.csv")
@@ -152,6 +156,7 @@ class Dataset_300W_YT(Dataset):
             self.x = []
             self.y = []
             self.p = []
+            self.n = []
             if self.max_size == -1:
                 number_of_images = len(image_paths)
             else:
@@ -177,7 +182,23 @@ class Dataset_300W_YT(Dataset):
 
                     # Scale the landmark coordinates to the output size
                     ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
-                    points = np.around(points / ratio)
+                    #points = np.around(points / ratio)
+                    points = points / ratio
+                    #Distance between corners of the eye
+                    crnr_eyes = np.sqrt(np.sum(np.square(points[45] - points[36])))
+
+                    #Distance between eye centres
+                    left_centre = (points[39] + points[36])/2
+                    right_centre = (points[45] + points[42]) / 2
+                    ctr_eyes = np.sqrt(np.sum(np.square(right_centre - left_centre)))
+
+                    #Bounding box normalisation
+                    sqrt_xy = np.sqrt(self.width_out*self.height_out)
+
+                    norm_dict = {"crnr_eyes": crnr_eyes, "ctr_eyes": ctr_eyes, "sqrt_xy": sqrt_xy}
+
+                    self.n.append(norm_dict)
+
                     # Get the heatmap for each landmark
                     if self.num_landmarks==5:
                         points=points[[37-1,40-1,43-1,46-1,34-1]]
@@ -198,14 +219,15 @@ class Dataset_300W_YT(Dataset):
             self.x= np.transpose(np.array(self.x),(0,3,1,2))
             self.y= np.array(self.y)
             self.p = np.array(self.p)
+            self.n = np.array(self.n)
 
-            self.pickle_save(self.x,self.y,self.p)
+            self.pickle_save(self.x,self.y,self.p,self.n)
         self.length=len(self.x)
 
     def get_data(self, which_set):
-        return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.p[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
+        return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.p[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.n[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
 
-    def render(self, x, y, p, out, number_images):
+    def render(self, x, y, p, n, out, number_images):
         from collections import OrderedDict
         from matplotlib import cm
 
