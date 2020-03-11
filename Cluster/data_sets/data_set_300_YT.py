@@ -19,7 +19,7 @@ import pickle
 class Dataset_300W_YT(Dataset):
     """300W and Youtube Faces datasets"""
 
-    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,rbf_width, which_dataset,force_new_pickle, landmarks_collapsed=False, max_size= -1):
+    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,rbf_width, which_dataset,force_new_pickle,experiment, landmarks_collapsed=False, max_size= -1):
         """
         Args:
             root_dir: Data directory containing both 300W and Youtube Faces directories.
@@ -49,7 +49,7 @@ class Dataset_300W_YT(Dataset):
         self.landmarks_collapsed=landmarks_collapsed
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
         self.create_dataset()
-
+        self.experiment = experiment
     def __len__(self):
         return self.length
 
@@ -289,8 +289,8 @@ class Dataset_300W_YT(Dataset):
 
             # plt.tight_layout()
         plt.show()
-
-
+        directory =  self.experiment +'/render.pdf'
+        plt.savefig(directory)
 
 
 

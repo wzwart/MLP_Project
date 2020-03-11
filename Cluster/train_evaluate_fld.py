@@ -78,7 +78,8 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
             which_dataset=2,
             force_new_pickle=args.force_new_pickle,
             landmarks_collapsed=args.landmarks_collapsed,
-            max_size=max_size_dataset)
+            max_size=max_size_dataset,
+	    experiment = args.experiment_name)
     else:
         raise ValueError
 
