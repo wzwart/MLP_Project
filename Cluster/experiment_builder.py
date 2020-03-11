@@ -194,8 +194,15 @@ class ExperimentBuilder(nn.Module):
         p_pred= np.array([y_np,x_np]).transpose(1,2,0)
         # calulate errors in output pixel scale, i.e. this is not normalized
         errors= (p-p_pred)**2
+        sqrt_errors = np.sqrt(np.sum(errors, axis=2))
+
         # normalize
-        return np.sqrt(np.sum(errors)/(n_landmarks*batch_size))
+        norm_array = np.empty(n.shape)
+        for i in range(len(n)):
+            norm_array[i] = n[i]["crnr_eyes"]
+        normalised_errors = (sqrt_errors.T/norm_array).T
+
+        return np.sum(normalised_errors)/(n_landmarks*batch_size)
 
     def run_train_iter(self, x, y, p, n):
         """
