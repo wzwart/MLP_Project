@@ -133,6 +133,13 @@ class ExperimentBuilder(nn.Module):
                 self.starting_epoch = 0
                 self.state = dict()
 
+        elif self.continue_from_epoch == -3:  # if continue from epoch is -3 (best model)
+            self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
+                model_save_dir=self.experiment_saved_models, model_save_name="train_model",
+                model_idx='best')  # reload existing model from epoch and return best val model index
+            # and the best val acc of that model
+            self.starting_epoch = self.state['current_epoch_idx']
+
         elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
             self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
                 model_save_dir=self.experiment_saved_models, model_save_name="train_model",
@@ -431,6 +438,13 @@ class ExperimentBuilder(nn.Module):
                     print("Model objects cannot be found, initializing a new model and starting from scratch")
                     self.starting_epoch = 0
                     self.state = dict()
+
+            elif self.continue_from_epoch == -3:  # if continue from epoch is -3 (best model)
+                self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
+                    model_save_dir=self.experiment_saved_models, model_save_name="train_model",
+                    model_idx='best')  # reload existing model from epoch and return best val model index
+                # and the best val acc of that model
+                self.starting_epoch = self.state['current_epoch_idx']
 
             elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
                 self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
