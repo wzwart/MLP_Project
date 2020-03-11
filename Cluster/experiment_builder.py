@@ -109,7 +109,8 @@ class ExperimentBuilder(nn.Module):
         print(self.experiment_folder, self.experiment_logs)
         # Set best models to be at 0 since we are just starting
         self.best_val_model_idx = 0
-        self.best_val_model_loss = 1000000
+        #self.best_val_model_loss = 1000000
+        self.best_val_model_nme = 1000000
 
         if not os.path.exists(self.experiment_folder):  # If experiment directory does not exist
             os.mkdir(self.experiment_folder)  # create the experiment directory
@@ -123,7 +124,7 @@ class ExperimentBuilder(nn.Module):
         self.num_epochs = num_epochs
         if self.continue_from_epoch == -2:
             try:
-                self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
+                self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
                     model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                     model_idx='latest')  # reload existing model from epoch and return best val model index
                 # and the best val acc of that model
@@ -134,14 +135,14 @@ class ExperimentBuilder(nn.Module):
                 self.state = dict()
 
         elif self.continue_from_epoch == -3:  # if continue from epoch is -3 (best model)
-            self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
+            self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
                 model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                 model_idx='best')  # reload existing model from epoch and return best val model index
             # and the best val acc of that model
             self.starting_epoch = self.state['current_epoch_idx']
 
         elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
-            self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
+            self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
                 model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                 model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
             # and the best val acc of that model
@@ -354,10 +355,10 @@ class ExperimentBuilder(nn.Module):
             current_epoch_losses = {"train_nme": [], "train_loss": [], "val_nme": [], "val_loss": []}
             current_epoch_losses = self.run_epoch(epoch_idx, current_epoch_losses, "train")
             current_epoch_losses = self.run_epoch(epoch_idx, current_epoch_losses, "val")
-            val_mean_loss = np.mean(current_epoch_losses['val_loss'])
-            if val_mean_loss < self.best_val_model_loss:  # if current epoch's mean val acc is greater than the saved best val acc then
+            val_mean_nme = np.mean(current_epoch_losses['val_nme'])
+            if val_mean_nme < self.best_val_model_nme:  # if current epoch's mean val acc is greater than the saved best val acc then
                 self.patience_counter = self.patience
-                self.best_val_model_loss = val_mean_loss  # set the best val model acc to be current epoch's val accuracy
+                self.best_val_model_nme = val_mean_nme  # set the best val model acc to be current epoch's val accuracy
                 self.best_val_model_idx = epoch_idx  # set the experiment-wise best val idx to be the current epoch's idx
 
             for key, value in current_epoch_losses.items():
@@ -380,7 +381,7 @@ class ExperimentBuilder(nn.Module):
             epoch_elapsed_time = "{:.4f}".format(epoch_elapsed_time)
             print("Epoch {}:".format(epoch_idx), out_string, "epoch time", epoch_elapsed_time, "seconds")
             self.state['current_epoch_idx'] = epoch_idx
-            self.state['best_val_model_acc'] = self.best_val_model_loss
+            self.state['best_val_model_acc'] = self.best_val_model_nme
             self.state['best_val_model_idx'] = self.best_val_model_idx
             if epoch_idx % self.save_model_per_n_epochs == 0:
                 self.save_model(model_save_dir=self.experiment_saved_models,
@@ -429,7 +430,7 @@ class ExperimentBuilder(nn.Module):
         if not x_y_only:
             if self.continue_from_epoch == -2:
                 try:
-                    self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
+                    self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
                         model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                         model_idx='latest')  # reload existing model from epoch and return best val model index
                     # and the best val acc of that model
@@ -440,14 +441,14 @@ class ExperimentBuilder(nn.Module):
                     self.state = dict()
 
             elif self.continue_from_epoch == -3:  # if continue from epoch is -3 (best model)
-                self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
+                self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
                     model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                     model_idx='best')  # reload existing model from epoch and return best val model index
                 # and the best val acc of that model
                 self.starting_epoch = self.state['current_epoch_idx']
 
             elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
-                self.best_val_model_idx, self.best_val_model_loss, self.state = self.load_model(
+                self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
                     model_save_dir=self.experiment_saved_models, model_save_name="train_model",
                     model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
                 # and the best val acc of that model
