@@ -288,9 +288,9 @@ class Dataset_300W_YT(Dataset):
                 ax[row_num][6].axis('off')
 
             # plt.tight_layout()
-        plt.show()
-        directory =  self.experiment +'/render.pdf'
+        directory = self.experiment + '/render.pdf'
         plt.savefig(directory)
+        plt.show()
 
 
 
