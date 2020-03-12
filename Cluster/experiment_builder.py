@@ -413,7 +413,7 @@ class ExperimentBuilder(nn.Module):
 
         current_epoch_losses = {"test_nme": [], "test_loss": []}  # initialize a statistics dict
         print(self.best_val_model_idx)
-        current_epoch_losses = self.run_epoch(current_epoch_losses=current_epoch_losses,epoch_idx="-", which_set="test")
+        current_epoch_losses = self.run_epoch(current_epoch_losses=current_epoch_losses,epoch_idx=self.best_val_model_idx, which_set="test")
 
         test_losses = {key: [np.mean(value)] for key, value in
                        current_epoch_losses.items()}  # save test set metrics in dict format
