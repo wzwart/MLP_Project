@@ -3,10 +3,10 @@
   "batch_size": 5,
   "continue_from_epoch": -1,
   "seed": 0,
-  "num_epochs": 500,
-  "experiment_name": "exp_depthwise",
+  "num_epochs": 300,
+  "experiment_name": "exp_depthwise_mn",
   "use_gpu": true,
-  "use_tqdm": true,
+  "use_tqdm": false,
   "max_size_dataset": -1,
   "num_landmarks": 68,
   "landmarks_collapsed": false,
@@ -24,5 +24,6 @@
   "save_model_per_n_epochs": 20,
   "experiment_name_graph": ["exp_depthwise"]
 }
+
 
 

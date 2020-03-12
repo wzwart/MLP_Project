@@ -29,18 +29,41 @@ class ContractingBlock(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.in_channels, out_channels=self.out_channels, groups=groups_1, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.out_channels)
+        if self.depthwise_conv:
+            self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.out_channels,
+                                                        out_channels=self.out_channels, padding=0)
+            self.layer_dict['relu_1_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_1_m'] = torch.nn.BatchNorm2d(self.out_channels)
+
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.out_channels, out_channels=self.out_channels, groups=groups_2, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.out_channels)
+        if self.depthwise_conv:
+            self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.out_channels,
+                                                        out_channels=self.out_channels, padding=0)
+            self.layer_dict['relu_2_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_2_m'] = torch.nn.BatchNorm2d(self.out_channels)
+
 
     def forward(self , x ):
         skip = self.layer_dict["skip"](x)
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_1_m"](out)
+            out = self.layer_dict["relu_1_m"](out)
+            out = self.layer_dict["bn_1_m"](out)
         out = self.layer_dict['conv_2'](out)
-        out = self.layer_dict['relu_2'](out+skip)
+        if self.depthwise_conv:
+            out = self.layer_dict['relu_2'](out)
+        else:
+            out = self.layer_dict['relu_2'](out + skip)
         out = self.layer_dict['bn_2'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_2_m"](out)
+            out = self.layer_dict["relu_2_m"](out+skip)
+            out = self.layer_dict["bn_2_m"](out)
         return out
 
 class Bottleneck(nn.Module):
@@ -65,20 +88,58 @@ class Bottleneck(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.bottle_neck_channels // 2, out_channels=self.bottle_neck_channels, groups=groups_1, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.bottle_neck_channels)
+        if self.depthwise_conv:
+            self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1,
+                                                        in_channels=self.bottle_neck_channels,
+                                                        out_channels=self.bottle_neck_channels,
+                                                        padding=0)
+            self.layer_dict['relu_1_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_1_m'] = torch.nn.BatchNorm2d(self.bottle_neck_channels)
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.bottle_neck_channels, out_channels=self.bottle_neck_channels, groups=groups_2, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.bottle_neck_channels)
+        if self.depthwise_conv:
+            self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1,
+                                                        in_channels=self.bottle_neck_channels,
+                                                        out_channels=self.bottle_neck_channels,
+                                                        padding=0)
+            self.layer_dict['relu_2_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_2_m'] = torch.nn.BatchNorm2d(self.bottle_neck_channels)
         self.layer_dict['deconv']=torch.nn.ConvTranspose2d(in_channels=self.bottle_neck_channels, out_channels=self.bottle_neck_channels // 2, kernel_size=self.kernel_size, groups=groups_1, stride=2, padding=1, output_padding=1)
+        if self.depthwise_conv:
+            self.layer_dict['conv_3_m'] = torch.nn.Conv2d(kernel_size=1,
+                                                        in_channels=self.bottle_neck_channels//2,
+                                                        out_channels=self.bottle_neck_channels//2,
+                                                        padding=0)
+            self.layer_dict['relu_3_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_3_m'] = torch.nn.BatchNorm2d(self.bottle_neck_channels//2)
+
 
     def forward(self , x ):
         skip = self.layer_dict["skip"](x)
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_1_m"](out)
+            out = self.layer_dict["relu_1_m"](out)
+            out = self.layer_dict["bn_1_m"](out)
+
         out = self.layer_dict['conv_2'](out)
-        out = self.layer_dict['relu_2'](out+skip)
+        if self.depthwise_conv:
+            out = self.layer_dict['relu_2'](out)
+        else:
+            out = self.layer_dict['relu_2'](out + skip)
         out = self.layer_dict['bn_2'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_2_m"](out)
+            out = self.layer_dict["relu_2_m"](out+skip)
+            out = self.layer_dict["bn_2_m"](out)
         out = self.layer_dict['deconv'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_3_m"](out)
+            out = self.layer_dict["relu_3_m"](out)
+            out = self.layer_dict["bn_3_m"](out)
         return out
 
 class ExpansiveBlock(nn.Module):
@@ -108,20 +169,59 @@ class ExpansiveBlock(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.in_channels, out_channels=self.mid_channel, groups=groups_1, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.mid_channel)
+        if self.depthwise_conv:
+            self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1,
+                                                        in_channels=self.mid_channel,
+                                                        out_channels=self.mid_channel,
+                                                        padding=0)
+            self.layer_dict['relu_1_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_1_m'] = torch.nn.BatchNorm2d(self.mid_channel)
+
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.mid_channel, out_channels=self.mid_channel, groups=groups_2, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.mid_channel)
+        if self.depthwise_conv:
+            self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1,
+                                                          in_channels=self.mid_channel,
+                                                          out_channels=self.mid_channel,
+                                                          padding=0)
+            self.layer_dict['relu_2_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_2_m'] = torch.nn.BatchNorm2d(self.mid_channel)
         self.layer_dict['deconv']=torch.nn.ConvTranspose2d(in_channels=self.mid_channel, out_channels=self.out_channels, kernel_size=3, stride=2, groups=groups_3, padding=1, output_padding=1)
+        if self.depthwise_conv:
+            self.layer_dict['conv_3_m'] = torch.nn.Conv2d(kernel_size=1,
+                                                          in_channels=self.out_channels,
+                                                          out_channels=self.out_channels,
+                                                          padding=0)
+            self.layer_dict['relu_3_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_3_m'] = torch.nn.BatchNorm2d(self.out_channels)
 
     def forward(self , x ):
         skip = self.layer_dict["skip"](x)
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_1_m"](out)
+            out = self.layer_dict["relu_1_m"](out)
+            out = self.layer_dict["bn_1_m"](out)
+
         out = self.layer_dict['conv_2'](out)
-        out = self.layer_dict['relu_2'](out + skip)
+        if self.depthwise_conv:
+            out = self.layer_dict['relu_2'](out)
+        else:
+            out = self.layer_dict['relu_2'](out + skip)
         out = self.layer_dict['bn_2'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_2_m"](out)
+            out = self.layer_dict["relu_2_m"](out+skip)
+            out = self.layer_dict["bn_2_m"](out)
+
         out = self.layer_dict['deconv'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_3_m"](out)
+            out = self.layer_dict["relu_3_m"](out)
+            out = self.layer_dict["bn_3_m"](out)
         return out
 
 class FinalBlock(nn.Module):
@@ -151,24 +251,55 @@ class FinalBlock(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.in_channels, out_channels=self.mid_channel, groups= groups_2, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.mid_channel)
+        if self.depthwise_conv:
+            self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.mid_channel,
+                                                        out_channels=self.mid_channel, padding=0)
+            self.layer_dict['relu_1_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_1_m'] = torch.nn.BatchNorm2d(self.mid_channel)
+
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.mid_channel, out_channels=self.mid_channel, groups= groups_3, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.mid_channel)
+        if self.depthwise_conv:
+            self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.mid_channel,
+                                                        out_channels=self.mid_channel, padding=0)
+            self.layer_dict['relu_2_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_2_m'] = torch.nn.BatchNorm2d(self.mid_channel)
         self.layer_dict['conv_3'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.mid_channel, out_channels=self.out_channels, groups= groups_4)
         self.layer_dict['relu_3']=torch.nn.ReLU()
         self.layer_dict['bn_3']=torch.nn.BatchNorm2d(self.out_channels)
+        if self.depthwise_conv:
+            self.layer_dict['conv_3_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.out_channels,
+                                                        out_channels=self.out_channels, padding=0)
+            self.layer_dict['relu_3_m'] = torch.nn.ReLU()
+            self.layer_dict['bn_3_m'] = torch.nn.BatchNorm2d(self.out_channels)
 
     def forward(self , x ):
         skip = self.layer_dict["skip"](x)
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_1_m"](out)
+            out = self.layer_dict["relu_1_m"](out)
+            out = self.layer_dict["bn_1_m"](out)
         out = self.layer_dict['conv_2'](out)
         out = self.layer_dict['relu_2'](out)
         out = self.layer_dict['bn_2'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_2_m"](out)
+            out = self.layer_dict["relu_2_m"](out)
+            out = self.layer_dict["bn_2_m"](out)
         out = self.layer_dict['conv_3'](out)
-        out = self.layer_dict['relu_3'](out + skip)
+        if self.depthwise_conv:
+            out = self.layer_dict['relu_3'](out)
+        else:
+            out = self.layer_dict['relu_3'](out + skip)
         out = self.layer_dict['bn_3'](out)
+        if self.depthwise_conv:
+            out = self.layer_dict["conv_3_m"](out)
+            out = self.layer_dict["relu_3_m"](out+skip)
+            out = self.layer_dict["bn_3_m"](out)
         return out
 
 class UNetDict(nn.Module):

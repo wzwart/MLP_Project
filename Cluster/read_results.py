@@ -54,12 +54,35 @@ for dir in dirs:
 
 df=df.drop(["experiment_name_graph","filepath_to_data_1","filepath_to_data_2","experiment_name"])
 
-df.to_excel("results.xlsx")
+
+
+
+
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
+
+alignment=Alignment(horizontal='general',
+                    vertical='bottom',
+                    text_rotation=0,
+                    wrap_text=True,
+                    shrink_to_fit=False,
+                    indent=0)
+
+
+wb = Workbook()
+ws = wb.active
+
+for r in dataframe_to_rows(df, index=True, header=True):
+    ws.append(r)
+
+for cell in ws["1:1"]:
+    cell.alignment = alignment
+wb.save("results.xlsx")
+
 
 for dir in dirs:
     df = df.rename(columns={dir: dir.replace(" ", "\n")})
-
-
 
 
 def hover(hover_color="#ffff99"):
@@ -82,5 +105,3 @@ html = (
 f=open("results.html", "w")
 f.write(html)
 f.close()
-
-print (df)
