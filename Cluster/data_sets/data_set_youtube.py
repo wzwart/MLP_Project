@@ -68,7 +68,6 @@ class DatasetYoutube(Dataset):
                 ax[row_num][1].imshow(out_img)
         plt.show()
 
-
     
 # tranforms
 

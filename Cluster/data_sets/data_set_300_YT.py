@@ -260,7 +260,6 @@ class Dataset_300W_YT(Dataset):
             # y_img=y_img/np.max(y_img, axis=(0,1))
 
             x_img = x_img[:, :, [2, 1, 0]]  # RGB BGR conversion
-
             bw_image = 0.3 * np.array(
                 [np.mean(x_img, axis=2), np.mean(x_img, axis=2), np.mean(x_img, axis=2)]).transpose((1, 2, 0))
             ax[row_num][0].imshow(x_img)
