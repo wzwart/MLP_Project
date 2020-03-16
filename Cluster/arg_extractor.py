@@ -83,6 +83,7 @@ def get_args():
                         help='How often save model')
     parser.add_argument('--patience', nargs="?", type=int, default=-1,
                         help='Patience for early stopping')
+    parser.add_argument('--normalisation', type=str, help='Normalisation constant to use')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:

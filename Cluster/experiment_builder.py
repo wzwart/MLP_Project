@@ -17,7 +17,7 @@ from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, save_model_per_n_epochs, rbf_width, data_provider,train_data, val_data,
-                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, patience=-1, use_tqdm=True, continue_from_epoch=-1):
+                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, patience=-1, normalisation="corner", use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -51,7 +51,7 @@ class ExperimentBuilder(nn.Module):
         self.prune_prob=prune_prob
         self.patience = patience
         self.patience_counter = patience
-
+        self.normalisation = normalisation
 
         try:
             self.device = torch.cuda.current_device()
@@ -197,9 +197,16 @@ class ExperimentBuilder(nn.Module):
         sqrt_errors = np.sqrt(np.sum(errors, axis=2))
 
         # normalize
+        if(self.normalisation == "corner"):
+            norm_const = "crnr_eyes"
+        elif(self.normalisation == "centre"):
+            norm_const = "ctr_eyes"
+        elif(self.normalisation == "box"):
+            norm_const = "sqrt_xy"
+        print(norm_const)
         norm_array = np.empty(n.shape)
         for i in range(len(n)):
-            norm_array[i] = n[i]["crnr_eyes"]
+            norm_array[i] = n[i][norm_const]
         normalised_errors = (sqrt_errors.T/norm_array).T
 
         return np.sum(normalised_errors)/(n_landmarks*batch_size), sqrt_errors, norm_array
