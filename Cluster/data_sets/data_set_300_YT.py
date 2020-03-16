@@ -227,7 +227,7 @@ class Dataset_300W_YT(Dataset):
     def get_data(self, which_set):
         return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.p[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.n[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
 
-    def render(self, x, y, p, n, out, number_images):
+    def render(self, x, y, p, n, out, nme_results,number_images):
         from collections import OrderedDict
         from matplotlib import cm
 
@@ -245,20 +245,19 @@ class Dataset_300W_YT(Dataset):
         no_cols = 8
         five_land = [33, 36, 39, 42, 45]
         fig, ax = plt.subplots(nrows=number_images, ncols=no_cols, figsize=(18, 3 * number_images))
+        nme, sqrt_errors, norm_array=nme_results
+        print(nme_results)
+
         for row_num in range(number_images):
             x_img = np.transpose(x[row_num], (1, 2, 0))
-
             x_img = x_img - np.min(x_img, axis=(0, 1))
             x_img = x_img / np.max(x_img, axis=(0, 1))
-
             y_img = np.array([np.array(
                 [y[row_num, :, :, i] * colors[i % no_colors, 0], y[row_num, :, :, i] * colors[i % no_colors, 1],
                  y[row_num, :, :, i] * colors[i % no_colors, 2]]) for i in range(no_landmarks)])
             y_img = np.sum(y_img, axis=0).transpose((1, 2, 0))
-
             y_img = y_img - np.min(y_img, axis=(0, 1))
             # y_img=y_img/np.max(y_img, axis=(0,1))
-
             x_img = x_img[:, :, [2, 1, 0]]  # RGB BGR conversion
             bw_image = 0.3 * np.array(
                 [np.mean(x_img, axis=2), np.mean(x_img, axis=2), np.mean(x_img, axis=2)]).transpose((1, 2, 0))
@@ -277,13 +276,16 @@ class Dataset_300W_YT(Dataset):
                         ax[row_num][five_counter].imshow(out_img + bw_image)
                         ax[row_num][five_counter].axis('off')
                         five_counter += 1
-
+                        ax[row_num][five_counter].text(x=0.0,y=-0.1,s=f"NE= {sqrt_errors[row_num][i]/norm_array[row_num]:.4f}", horizontalalignment='left', verticalalignment='top', transform=ax[row_num][five_counter-1].transAxes)
                     if (i == 0):
                         sum_img = out_img
                     else:
                         sum_img += out_img
 
                 ax[row_num][6].imshow(sum_img + bw_image)
+                normalised_errors = (sqrt_errors.T / norm_array).T
+                ax[row_num][6].text(x=0.0,y=-0.1,s=f"NME= {np.mean(normalised_errors[row_num]):.4f}", horizontalalignment='left', verticalalignment='top', transform=ax[row_num][6].transAxes)
+
                 ax[row_num][6].axis('off')
 
             # plt.tight_layout()

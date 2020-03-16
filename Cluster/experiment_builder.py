@@ -202,7 +202,7 @@ class ExperimentBuilder(nn.Module):
             norm_array[i] = n[i]["crnr_eyes"]
         normalised_errors = (sqrt_errors.T/norm_array).T
 
-        return np.sum(normalised_errors)/(n_landmarks*batch_size)
+        return np.sum(normalised_errors)/(n_landmarks*batch_size), sqrt_errors, norm_array
 
     def run_train_iter(self, x, y, p, n):
         """
@@ -243,7 +243,7 @@ class ExperimentBuilder(nn.Module):
             self.model.pruner.prune(self.device)
         self.optimizer.step()  # update network parameters
         # nme=2
-        nme = self.calc_nme(out, p, n)
+        nme, _, _ = self.calc_nme(out, p, n)
 
 
         return loss.data.detach().cpu().numpy(), nme
@@ -275,7 +275,7 @@ class ExperimentBuilder(nn.Module):
 
         loss = self.criterion(loss_in, loss_target)
 
-        nme = self.calc_nme(out, p, n)
+        nme, _, _ = self.calc_nme(out, p, n)
         #nme = self.compute_nme(out, p)
 
         return loss.data.detach().cpu().numpy(), nme
@@ -480,8 +480,10 @@ class ExperimentBuilder(nn.Module):
                 n_img = n.detach().cpu().numpy()
             if  x_y_only:
                 out=None
+                nme_results=None
             else:
                 out = self.model.forward(x_net) # forward the data in the model
+                nme_results= self.calc_nme(out,p,n)
 
                 if str(self.criterion) == "CrossEntropyLoss()":
                     loss_in = out.reshape((out.shape[0] * out.shape[1] * out.shape[2], out.shape[3]))
@@ -494,5 +496,5 @@ class ExperimentBuilder(nn.Module):
                 out = out.detach().cpu().numpy()  # forward the data in the model
 
             break
-        self.data_provider.render(x=x_img,y=y_img,p=p_img,n=n_img,out=out,number_images=number_images)
+        self.data_provider.render(x=x_img,y=y_img,p=p_img,n=n_img,out=out,nme_results=nme_results,number_images=number_images)
 

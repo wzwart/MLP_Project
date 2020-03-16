@@ -251,7 +251,7 @@ class DataProviderFLD(DataProvider):
         inputs_batch, targets_batch, points_batch, norm_batch = super(DataProviderFLD, self).next()
         return inputs_batch, targets_batch, points_batch, norm_batch
 
-    def render(self,x,y,p,n,out,number_images):
-        self.data_set.render(x,y,p,n,out,number_images)
+    def render(self,x,y,p,n,out,nme_results,number_images):
+        self.data_set.render(x,y,p,n,out,nme_results,number_images)
 
 
