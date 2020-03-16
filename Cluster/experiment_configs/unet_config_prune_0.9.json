@@ -4,7 +4,7 @@
   "continue_from_epoch": -3,
   "seed": 0,
   "num_epochs": 300,
-  "experiment_name": "exp_baseline_prune_0.5",
+  "experiment_name": "exp_baseline_prune_0.9",
   "use_gpu": false,
   "use_tqdm": true,
   "max_size_dataset": -1,
@@ -15,7 +15,7 @@
   "filepath_to_data_2": "/home/sxxxxxxx/mlpractical/data",
   "filepath_to_data_1": "../Basic_Detector/data",
   "rbf_width": 0.03,
-  "prune_prob": 0.5,
+  "prune_prob": 0.9,
   "force_new_pickle": true,
   "Hourglass_depth": 4,
   "Hourglass_bottleneck_channels": 1024,
@@ -23,7 +23,7 @@
   "depthwise_conv": false,
   "patience": 30,
   "save_model_per_n_epochs": 20,
-  "experiment_name_graph": ["exp_baseline_prune_0.5"]
+  "experiment_name_graph": ["exp_baseline_prune_0.9"]
 }
 
 
