@@ -480,6 +480,10 @@ class ExperimentBuilder(nn.Module):
 
         if self.prune_prob != 0:
             self.pruner = Pruner(self.model.layer_dict, self.prune_prob, self.pruning_method)
+            weight_count = self.pruner.weight_count
+            weight_count_pruned = self.pruner.weight_count_pruned
+            print(f"Weight :  pruned/ all  = {weight_count_pruned}/{weight_count} / ={100*weight_count_pruned/weight_count:.2f}%")
+            print(self.pruner.parameters_to_prune)
 
 
         self.model.eval()
