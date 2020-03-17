@@ -9,6 +9,8 @@ import os
 import numpy as np
 import time
 from data_sets.data_set_utils import *
+from nets.pruner import Pruner
+from render import render
 from matplotlib import cm
 
 from torch.optim.adam import Adam
@@ -17,7 +19,7 @@ from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, save_model_per_n_epochs, rbf_width, data_provider,train_data, val_data,
-                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, patience=-1, normalisation="corner", use_tqdm=True, continue_from_epoch=-1):
+                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, patience=-1, normalisation="corner", pruning_method=None, use_tqdm=True, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -52,6 +54,7 @@ class ExperimentBuilder(nn.Module):
         self.patience = patience
         self.patience_counter = patience
         self.normalisation = normalisation
+        self.pruning_method = pruning_method
 
         try:
             self.device = torch.cuda.current_device()
@@ -141,6 +144,7 @@ class ExperimentBuilder(nn.Module):
             # and the best val acc of that model
             self.starting_epoch = self.state['current_epoch_idx']
 
+
         elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
             self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
                 model_save_dir=self.experiment_saved_models, model_save_name="train_model",
@@ -151,6 +155,8 @@ class ExperimentBuilder(nn.Module):
         else:
             self.starting_epoch = 0
             self.state = dict()
+
+
 
     def get_num_parameters(self):
         total_num_params = 0
@@ -431,7 +437,7 @@ class ExperimentBuilder(nn.Module):
 
         return total_losses, test_losses
 
-    def render(self,data,number_images, x_y_only=False ):
+    def render(self,data,number_images):
         '''
         Loads the model and then class the render function of the data set
 
@@ -441,67 +447,81 @@ class ExperimentBuilder(nn.Module):
         Returns:
 
         '''
-        if not x_y_only:
-            if self.continue_from_epoch == -2:
-                try:
-                    self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
-                        model_save_dir=self.experiment_saved_models, model_save_name="train_model",
-                        model_idx='latest')  # reload existing model from epoch and return best val model index
-                    # and the best val acc of that model
-                    self.starting_epoch = self.state['current_epoch_idx']
-                except:
-                    print("Model objects cannot be found, initializing a new model and starting from scratch")
-                    self.starting_epoch = 0
-                    self.state = dict()
 
-            elif self.continue_from_epoch == -3:  # if continue from epoch is -3 (best model)
+
+        if self.continue_from_epoch == -2:
+            try:
                 self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
                     model_save_dir=self.experiment_saved_models, model_save_name="train_model",
-                    model_idx='best')  # reload existing model from epoch and return best val model index
+                    model_idx='latest')  # reload existing model from epoch and return best val model index
                 # and the best val acc of that model
                 self.starting_epoch = self.state['current_epoch_idx']
+            except:
+                print("Model objects cannot be found, initializing a new model and starting from scratch")
+                self.starting_epoch = 0
+                self.state = dict()
 
-            elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
-                self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
-                    model_save_dir=self.experiment_saved_models, model_save_name="train_model",
-                    model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
-                # and the best val acc of that model
-                self.starting_epoch = self.state['current_epoch_idx']
-            else:
-                raise ValueError(f"Can not load from epoch {self.continue_from_epoch}")
+        elif self.continue_from_epoch == -3:  # if continue from epoch is -3 (best model)
+            self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
+                model_save_dir=self.experiment_saved_models, model_save_name="train_model",
+                model_idx='best')  # reload existing model from epoch and return best val model index
+            # and the best val acc of that model
+            self.starting_epoch = self.state['current_epoch_idx']
 
-            self.model.eval()
+        elif self.continue_from_epoch != -1:  # if continue from epoch is not -1 then
+            self.best_val_model_idx, self.best_val_model_nme, self.state = self.load_model(
+                model_save_dir=self.experiment_saved_models, model_save_name="train_model",
+                model_idx=self.continue_from_epoch)  # reload existing model from epoch and return best val model index
+            # and the best val acc of that model
+            self.starting_epoch = self.state['current_epoch_idx']
+        else:
+            raise ValueError(f"Can not load from epoch {self.continue_from_epoch}")
+
+
+        if self.prune_prob != 0:
+            self.pruner = Pruner(self.model.layer_dict, self.prune_prob, self.pruning_method)
+
+
+        self.model.eval()
+        first=True
         for (x,y,p,n) in data: #is only executed once, data can only be accessed through an enumerator
             if type(x) is np.ndarray:
 
                 x_net =  torch.Tensor(x).float()[:number_images].to(device=self.device)
-                x_img = x[:number_images].copy()
-                y_img = y[:number_images].copy()
-                p_img = p[:number_images].copy()
-                n_img = n[:number_images].copy()
+                x_img = x.copy()
+                y_img = y.copy()
+                p_img = p.copy()
+                n_img = n.copy()
             else:
                 x_net=x.copy()
                 x_img=x.detach().cpu().numpy()
                 y_img=y.detach().cpu().numpy()
                 p_img=p.detach().cpu().numpy()
                 n_img = n.detach().cpu().numpy()
-            if  x_y_only:
-                out=None
-                nme_results=None
+
+            out = self.model.forward(x_net) # forward the data in the model
+            nme_results= self.calc_nme(out,p,n)
+            out = out.detach().cpu().numpy()  # forward the data in the model
+
+            if first:
+                x_array = x_img
+                y_array = y_img
+                p_array = p_img
+                n_array = n_img
+                out_array = out
+                nme_array = nme_results
+                first = False
             else:
-                out = self.model.forward(x_net) # forward the data in the model
-                nme_results= self.calc_nme(out,p,n)
+                x_array = np.vstack((x_array, x_img))
+                y_array = np.vstack((y_array, y_img))
+                p_array = np.vstack((p_array, p_img))
+                n_array = np.vstack((n_array, n_img))
+                out_array = np.vstack((out_array, out))
+                nme_array = (np.vstack((nme_array[0], nme_results[0])),np.vstack((nme_array[1], nme_results[1])),np.hstack((nme_array[2], nme_results[2])))
 
-                if str(self.criterion) == "CrossEntropyLoss()":
-                    loss_in = out.reshape((out.shape[0] * out.shape[1] * out.shape[2], out.shape[3]))
-                    loss_target = y.reshape((y.shape[0] * y.shape[1] * y.shape[2], y.shape[3]))[:, 0]
-                else:
-                    loss_in = out
-                    loss_target = y
-                loss = self.criterion(torch.Tensor(loss_in).float().to(device=self.device), torch.Tensor(loss_target).float().to(device=self.device))
-                print(loss)
-                out = out.detach().cpu().numpy()  # forward the data in the model
+            nme_array=(np.mean(nme_array[0]),nme_array[1],nme_array[2])
+            if  x_array.shape[0]>= number_images:
+                break
 
-            break
-        self.data_provider.render(x=x_img,y=y_img,p=p_img,n=n_img,out=out,nme_results=nme_results,number_images=number_images)
+        render(x=x_array,y=y_array,p=p_array,n=n_array,out=out_array,nme_results=nme_array,number_images=number_images, experiment=self.experiment_name)
 

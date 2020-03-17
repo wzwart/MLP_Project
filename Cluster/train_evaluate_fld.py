@@ -100,10 +100,9 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
     data_provider=train_data
 
     if args.landmarks_collapsed:
-        net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv, prune_prob=args.prune_prob)
+        net = UNetDict(in_channel=3, out_channel=1, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv, prune_prob=args.prune_prob, pruning_method=args.pruning_method)
     else:
-        # net = UNet(in_channel=3, out_channel=args.num_landmarks)
-        net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv, prune_prob=args.prune_prob)
+        net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv, prune_prob=args.prune_prob, pruning_method=args.pruning_method)
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001)
 
@@ -123,13 +122,18 @@ conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     test_data=test_data,
                                     criterion=criterion,
                                     prune_prob=args.prune_prob,
+                                    pruning_method=args.pruning_method,
                                     patience=args.patience,
                                     normalisation=args.normalisation,
                                     optimizer=optimizer
                                     )  # build an experiment object
 
 if args.use_case == "render":
-    conv_experiment.render(data=test_data, number_images=args.no_images_to_render, x_y_only=False)
+
+
+    if (test_data.inputs.shape[0] < args.no_images_to_render):
+        raise ValueError(f"Size of test data set {test_data.inputs.shape[0]} to small to render {args.no_images_to_render} images")
+    conv_experiment.render(data=test_data, number_images=args.no_images_to_render)
 else:
     experiment_metrics, test_metrics = conv_experiment.run_experiment()  # run experiment and return experiment metrics
 
