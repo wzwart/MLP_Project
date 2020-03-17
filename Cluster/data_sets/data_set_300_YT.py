@@ -19,7 +19,7 @@ import pickle
 class Dataset_300W_YT(Dataset):
     """300W and Youtube Faces datasets"""
 
-    def __init__(self, root_dir, width_in,height_in, width_out, height_out, num_landmarks,rbf_width, which_dataset,force_new_pickle,experiment, landmarks_collapsed=False, max_size= -1):
+    def __init__(self, root_dir, width_in, height_in, width_out, height_out, num_landmarks, rbf_width, which_dataset, force_new_pickle, experiment, test_dataset, landmarks_collapsed=False, max_size= -1):
         """
         Args:
             root_dir: Data directory containing both 300W and Youtube Faces directories.
@@ -48,8 +48,10 @@ class Dataset_300W_YT(Dataset):
         self.force_new_pickle=force_new_pickle
         self.landmarks_collapsed=landmarks_collapsed
         self.frac = {"train": (0, 0.7), "valid": (0.7, 0.9), "test": (0.9, 1)}
+        self.test_dataset = test_dataset
         self.create_dataset()
         self.experiment = experiment
+
     def __len__(self):
         return self.length
 
@@ -78,7 +80,7 @@ class Dataset_300W_YT(Dataset):
         self.set_pickle_path()
         import glob
         files = glob.glob(self.pickle_path.replace("XX", '*'))
-        if self.force_new_pickle:
+        if self.force_new_pickle or self.which_dataset == 1:
             for file in files:
                 os.remove(file)
             return False, None
@@ -221,11 +223,102 @@ class Dataset_300W_YT(Dataset):
             self.p = np.array(self.p)
             self.n = np.array(self.n)
 
-            self.pickle_save(self.x,self.y,self.p,self.n)
+            if (self.which_dataset == 1):
+                path = os.path.join(self.input_path, "300W/300W.csv")
+
+                dataset = pd.read_csv(path)
+                image_paths = dataset.iloc[:, 0].to_numpy()
+                landmarks = dataset.iloc[:, 1:].to_numpy()
+
+                test_paths = []
+                test_landmarks = []
+
+                for i in range(len(image_paths)):
+                    if(image_paths[i].split("_")[0] == self.test_dataset):
+                        test_paths.append(os.path.join(self.input_path, "300W/images/" + image_paths[i]))
+                        test_landmarks.append(landmarks[i])
+
+                self.x_test = []
+                self.y_test = []
+                self.p_test = []
+                self.n_test = []
+
+                number_of_images = len(test_paths)
+                n_updates = min(50, number_of_images)
+                with tqdm.tqdm(total=n_updates, file=sys.stdout) as pbar_test:  # ini a progress bar
+                    for i, image_path in enumerate(test_paths):
+                        if i % (number_of_images // n_updates) == 0:
+                            pbar_test.set_description(
+                                f"Generate Test Images {i} of {number_of_images}")  # update progress bar string output
+                            pbar_test.update(1)  # update progress bar status
+
+                        # Resize the image to the input size
+                        resized, points = resizeInput(image_path, test_landmarks[i], self.width_in, self.height_in)
+
+                        # normalize:
+                        resized = resized - resized.mean(axis=(0, 1))
+                        resized = resized / np.sqrt(resized.var(axis=(0, 1)))
+
+                        self.x_test.append(resized)
+
+                        # Scale the landmark coordinates to the output size
+                        ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
+                        # points = np.around(points / ratio)
+                        points = points / ratio
+                        # Distance between corners of the eye
+                        crnr_eyes = np.sqrt(np.sum(np.square(points[45] - points[36])))
+
+                        # Distance between eye centres
+                        left_centre = (points[39] + points[36]) / 2
+                        right_centre = (points[45] + points[42]) / 2
+                        ctr_eyes = np.sqrt(np.sum(np.square(right_centre - left_centre)))
+
+                        # Bounding box normalisation
+                        sqrt_xy = np.sqrt(self.width_out * self.height_out)
+
+                        norm_dict = {"crnr_eyes": crnr_eyes, "ctr_eyes": ctr_eyes, "sqrt_xy": sqrt_xy}
+
+                        self.n_test.append(norm_dict)
+
+                        # Get the heatmap for each landmark
+                        if self.num_landmarks == 5:
+                            points = points[[37 - 1, 40 - 1, 43 - 1, 46 - 1, 34 - 1]]
+
+                        if self.landmarks_collapsed:
+                            u = np.zeros((self.width_out, self.height_out, 1))
+                        else:
+                            u = np.zeros((self.width_out, self.height_out, self.num_landmarks))
+                        for j, (x_p, y_p) in enumerate(points[:self.num_landmarks]):
+                            if self.landmarks_collapsed:
+                                u[:, :, 0] += generateHeatmap(x_p, y_p, self.width_out, self.height_out, self.rbf_width)
+                            else:
+                                u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out, self.rbf_width)
+                        u = np.clip(u, 0, 1)
+                        self.y_test.append(u)
+                        self.p_test.append(points[:self.num_landmarks])
+
+                self.x_test = np.transpose(np.array(self.x_test), (0, 3, 1, 2))
+                self.y_test = np.array(self.y_test)
+                self.p_test = np.array(self.p_test)
+                self.n_test = np.array(self.n_test)
+
+            else:
+                self.pickle_save(self.x,self.y,self.p,self.n)
+
         self.length=len(self.x)
 
     def get_data(self, which_set):
-        return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.p[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.n[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
+
+        if (self.which_dataset != 1):
+            return self.x[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.y[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.p[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)], self.n[int(self.frac[which_set][0]*self.length):int(self.frac[which_set][1]*self.length)]
+
+        else:
+            if(which_set == 'train'):
+                return self.x[0:int(0.8 * self.length)], self.y[0:int(0.8*self.length)], self.p[0:int(0.8 * self.length)], self.n[0:int(0.8*self.length)]
+            elif (which_set == 'valid'):
+                return self.x[int(0.8*self.length):int(self.length)], self.y[int(0.8*self.length):int(self.length)], self.p[int(0.8*self.length):int(self.length)], self.n[int(0.8*self.length):int(self.length)]
+            elif (which_set == 'test'):
+                return self.x_test, self.y_test, self.p_test, self.n_test
 
     def render(self, x, y, p, n, out, nme_results,number_images):
         from collections import OrderedDict

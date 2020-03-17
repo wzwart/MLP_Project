@@ -84,6 +84,7 @@ def get_args():
     parser.add_argument('--patience', nargs="?", type=int, default=-1,
                         help='Patience for early stopping')
     parser.add_argument('--normalisation', type=str, help='Normalisation constant to use')
+    parser.add_argument('--test_dataset', type=str, help='Test dataset to use when Youtube dataset is selected')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:

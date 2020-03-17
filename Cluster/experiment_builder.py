@@ -55,7 +55,7 @@ class ExperimentBuilder(nn.Module):
 
         try:
             self.device = torch.cuda.current_device()
-            print("number of available devicews", torch.cuda.device_count())
+            print("number of available devices", torch.cuda.device_count())
             print("Use GPU", use_gpu)
         except:
             self.device = torch.device('cpu')
@@ -203,7 +203,7 @@ class ExperimentBuilder(nn.Module):
             norm_const = "ctr_eyes"
         elif(self.normalisation == "box"):
             norm_const = "sqrt_xy"
-        print(norm_const)
+
         norm_array = np.empty(n.shape)
         for i in range(len(n)):
             norm_array[i] = n[i][norm_const]

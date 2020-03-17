@@ -55,8 +55,10 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
             rbf_width=args.rbf_width,
             which_dataset=0,
             force_new_pickle=args.force_new_pickle,
+            test_dataset=args.test_dataset,
             landmarks_collapsed=args.landmarks_collapsed,
-            max_size=max_size_dataset)
+            max_size=max_size_dataset,
+            experiment = args.experiment_name)
     elif args.dataset_name == 'Youtube':
         dataset = Dataset_300W_YT(
             root_dir=os.path.join(filepath_to_data),
@@ -66,8 +68,10 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
             rbf_width=args.rbf_width,
             which_dataset=1,
             force_new_pickle=args.force_new_pickle,
+            test_dataset=args.test_dataset,
             landmarks_collapsed=args.landmarks_collapsed,
-            max_size=max_size_dataset)
+            max_size=max_size_dataset,
+            experiment = args.experiment_name)
     elif args.dataset_name == 'Both':
         dataset = Dataset_300W_YT(
             root_dir=os.path.join(filepath_to_data),
@@ -77,9 +81,10 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
             rbf_width=args.rbf_width,
             which_dataset=2,
             force_new_pickle=args.force_new_pickle,
+            test_dataset=args.test_dataset,
             landmarks_collapsed=args.landmarks_collapsed,
             max_size=max_size_dataset,
-	    experiment = args.experiment_name)
+            experiment = args.experiment_name)
     else:
         raise ValueError
 
