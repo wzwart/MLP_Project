@@ -80,7 +80,7 @@ class Dataset_300W_YT(Dataset):
         self.set_pickle_path()
         import glob
         files = glob.glob(self.pickle_path.replace("XX", '*'))
-        if self.force_new_pickle or self.which_dataset == 1:
+        if self.force_new_pickle:
             for file in files:
                 os.remove(file)
             return False, None
@@ -218,10 +218,6 @@ class Dataset_300W_YT(Dataset):
                     self.y.append(u)
                     self.p.append(points[:self.num_landmarks])
 
-            self.x= np.transpose(np.array(self.x),(0,3,1,2))
-            self.y= np.array(self.y)
-            self.p = np.array(self.p)
-            self.n = np.array(self.n)
 
             if (self.which_dataset == 1):
                 path = os.path.join(self.input_path, "300W/300W.csv")
@@ -237,11 +233,6 @@ class Dataset_300W_YT(Dataset):
                     if(image_paths[i].split("_")[0] == self.test_dataset):
                         test_paths.append(os.path.join(self.input_path, "300W/images/" + image_paths[i]))
                         test_landmarks.append(landmarks[i])
-
-                self.x_test = []
-                self.y_test = []
-                self.p_test = []
-                self.n_test = []
 
                 number_of_images = len(test_paths)
                 n_updates = min(50, number_of_images)
@@ -259,7 +250,7 @@ class Dataset_300W_YT(Dataset):
                         resized = resized - resized.mean(axis=(0, 1))
                         resized = resized / np.sqrt(resized.var(axis=(0, 1)))
 
-                        self.x_test.append(resized)
+                        self.x.append(resized)
 
                         # Scale the landmark coordinates to the output size
                         ratio = np.array([(self.width_in / self.width_out), (self.height_in / self.height_out)])
@@ -278,7 +269,7 @@ class Dataset_300W_YT(Dataset):
 
                         norm_dict = {"crnr_eyes": crnr_eyes, "ctr_eyes": ctr_eyes, "sqrt_xy": sqrt_xy}
 
-                        self.n_test.append(norm_dict)
+                        self.n.append(norm_dict)
 
                         # Get the heatmap for each landmark
                         if self.num_landmarks == 5:
@@ -294,16 +285,15 @@ class Dataset_300W_YT(Dataset):
                             else:
                                 u[:, :, j] = generateHeatmap(x_p, y_p, self.width_out, self.height_out, self.rbf_width)
                         u = np.clip(u, 0, 1)
-                        self.y_test.append(u)
-                        self.p_test.append(points[:self.num_landmarks])
+                        self.y.append(u)
+                        self.p.append(points[:self.num_landmarks])
 
-                self.x_test = np.transpose(np.array(self.x_test), (0, 3, 1, 2))
-                self.y_test = np.array(self.y_test)
-                self.p_test = np.array(self.p_test)
-                self.n_test = np.array(self.n_test)
+            self.x = np.transpose(np.array(self.x), (0, 3, 1, 2))
+            self.y = np.array(self.y)
+            self.p = np.array(self.p)
+            self.n = np.array(self.n)
 
-            else:
-                self.pickle_save(self.x,self.y,self.p,self.n)
+            self.pickle_save(self.x,self.y,self.p,self.n)
 
         self.length=len(self.x)
 
@@ -314,11 +304,11 @@ class Dataset_300W_YT(Dataset):
 
         else:
             if(which_set == 'train'):
-                return self.x[0:int(0.8 * self.length)], self.y[0:int(0.8*self.length)], self.p[0:int(0.8 * self.length)], self.n[0:int(0.8*self.length)]
+                return self.x[0:int(0.8 * (self.length-300))], self.y[0:int(0.8*(self.length-300))], self.p[0:int(0.8 * (self.length-300))], self.n[0:int(0.8*(self.length-300))]
             elif (which_set == 'valid'):
-                return self.x[int(0.8*self.length):int(self.length)], self.y[int(0.8*self.length):int(self.length)], self.p[int(0.8*self.length):int(self.length)], self.n[int(0.8*self.length):int(self.length)]
+                return self.x[int(0.8*(self.length-300)):int(self.length-300)], self.y[int(0.8*(self.length-300)):int(self.length-300)], self.p[int(0.8*(self.length-300)):int(self.length-300)], self.n[int(0.8*(self.length-300)):int(self.length-300)]
             elif (which_set == 'test'):
-                return self.x_test, self.y_test, self.p_test, self.n_test
+                return self.x[int(self.length-300):int(self.length)], self.y[int(self.length-300):int(self.length)], self.p[int(self.length-300):int(self.length)], self.n[int(self.length-300):int(self.length)]
 
     def render(self, x, y, p, n, out, nme_results,number_images):
         from collections import OrderedDict
