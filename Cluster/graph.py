@@ -13,7 +13,7 @@ for i in range(0,len(args.experiment_name_graph),1):
     summary = str(currentDirectory) + '/' + args.experiment_name_graph[i] + '/result_outputs/summary.csv'
     df = pd.read_csv(summary)
     fig.add_trace(go.Scatter(x=df['curr_epoch'], y=df['train_loss'],
-                        mode='lines',
+                        mode='markers',
                         name='train_loss' +' '+ args.experiment_name_graph[i]))
     fig.add_trace(go.Scatter(x=df['curr_epoch'], y=df['val_loss'],
                         mode='lines',
