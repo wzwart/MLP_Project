@@ -252,8 +252,6 @@ class ExperimentBuilder(nn.Module):
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
         loss.backward()  # backpropagate to compute gradients for current iter loss
-        if self.prune_prob!=0:
-            self.model.pruner.prune(self.device)
         self.optimizer.step()  # update network parameters
         # nme=2
         nme, _, _ = self.calc_nme(out, p, n)
@@ -423,7 +421,12 @@ class ExperimentBuilder(nn.Module):
         self.load_model(model_save_dir=self.experiment_saved_models, model_idx='best',
                         # load best validation model
                         model_save_name="train_model")
-
+        if self.prune_prob != 0:
+            self.pruner = Pruner(self.model.layer_dict, self.prune_prob, self.pruning_method)
+            weight_count = self.pruner.weight_count
+            weight_count_pruned = self.pruner.weight_count_pruned
+            print(f"Weight :  pruned/ all  = {weight_count_pruned}/{weight_count} / ={100*weight_count_pruned/weight_count:.2f}%")
+            print(self.pruner.parameters_to_prune)
         current_epoch_losses = {"test_nme": [], "test_loss": []}  # initialize a statistics dict
         print(self.best_val_model_idx)
         current_epoch_losses = self.run_epoch(current_epoch_losses=current_epoch_losses,epoch_idx=self.best_val_model_idx, which_set="test")
@@ -478,12 +481,7 @@ class ExperimentBuilder(nn.Module):
             raise ValueError(f"Can not load from epoch {self.continue_from_epoch}")
 
 
-        if self.prune_prob != 0:
-            self.pruner = Pruner(self.model.layer_dict, self.prune_prob, self.pruning_method)
-            weight_count = self.pruner.weight_count
-            weight_count_pruned = self.pruner.weight_count_pruned
-            print(f"Weight :  pruned/ all  = {weight_count_pruned}/{weight_count} / ={100*weight_count_pruned/weight_count:.2f}%")
-            print(self.pruner.parameters_to_prune)
+
 
 
         self.model.eval()
