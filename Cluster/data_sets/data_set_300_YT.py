@@ -28,7 +28,7 @@ class Dataset_300W_YT(Dataset):
             width_out: Width of the output heatmap.
             height_out: Height of the output heatmap.
             num_landmarks: Number of landmarks to do the heatmap for.
-            which_dataset: Use 300W (0), Youtube faces (1) or both (2)
+            which_dataset: Use 300W (0), Youtube faces (1), both (2), helen + Youtube in training and 300W in test (3)
             landmarks_collapsed: Boolean indicating if all the landmarks should be collapsed to one heatmap.
             max_size: Number of images to consider. If -1, consider all.
         """
@@ -56,7 +56,7 @@ class Dataset_300W_YT(Dataset):
         return self.length
 
     def set_pickle_path(self):
-        names_lookup={0:"300W", 1:"Youtube", 2:"300W_Youtube"}
+        names_lookup={0:"300W", 1:"Youtube", 2:"300W_Youtube", 3:"Benchmark"}
         self.pickle_path = os.path.join(self.input_path, f"pickle_{names_lookup[self.which_dataset]}_{self.max_size}_{self.num_landmarks}_XX.p")
         if self.landmarks_collapsed:
             self.pickle_path=self.pickle_path.replace(".p","_col.p")
@@ -154,6 +154,29 @@ class Dataset_300W_YT(Dataset):
 
                 landmarks = np.vstack((landmarks1, landmarks2))
 
+            elif (self.which_dataset == 3):
+                path1 = os.path.join(self.input_path, "helen/helen.csv")
+                path2 = os.path.join(self.input_path,"Youtube/Youtube.csv")
+
+                dataset1 = pd.read_csv(path1)
+                dataset2 = pd.read_csv(path2)
+
+                image_paths1 = dataset1.iloc[:, 0].to_numpy()
+                image_paths2 = dataset2.iloc[:, 0].to_numpy()
+
+                for i in range(len(image_paths1)):
+                    image_paths1[i] = os.path.join(self.input_path, "helen/images/" + image_paths1[i])
+
+                for i in range(len(image_paths2)):
+                    image_paths2[i] = os.path.join(self.input_path, "Youtube/" + image_paths2[i])
+
+                image_paths = np.hstack((image_paths1, image_paths2))
+
+                landmarks1 = dataset1.iloc[:, 1:].to_numpy()
+                landmarks2 = dataset2.iloc[:, 1:].to_numpy()
+
+                landmarks = np.vstack((landmarks1, landmarks2))
+
             image_paths, landmarks = shuffle(image_paths, landmarks, random_state=0)
             self.x = []
             self.y = []
@@ -219,7 +242,7 @@ class Dataset_300W_YT(Dataset):
                     self.p.append(points[:self.num_landmarks])
 
 
-            if (self.which_dataset == 1):
+            if (self.which_dataset == 1 or self.which_dataset == 3):
                 path = os.path.join(self.input_path, "300W/300W.csv")
 
                 dataset = pd.read_csv(path)

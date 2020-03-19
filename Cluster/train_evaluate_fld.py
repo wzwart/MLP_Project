@@ -21,7 +21,7 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 username = getpass.getuser()
 username = str(username)
-if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset_name == 'Both':
+if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset_name == 'Both' or args.dataset_name == 'Benchmark':
 
     if os.path.isdir(args.filepath_to_data_1.replace("sxxxxxxx", username)):
         filepath_to_data = args.filepath_to_data_1.replace("sxxxxxxx", username)
@@ -47,46 +47,28 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
     width_out = 64
     height_out = 64
     if args.dataset_name == '300W':
-        dataset = Dataset_300W_YT(
-            root_dir=os.path.join(filepath_to_data),
-            width_in=width_in, height_in=height_in, width_out=width_out,
-            height_out=height_out,
-            num_landmarks=args.num_landmarks,
-            rbf_width=args.rbf_width,
-            which_dataset=0,
-            force_new_pickle=args.force_new_pickle,
-            test_dataset=args.test_dataset,
-            landmarks_collapsed=args.landmarks_collapsed,
-            max_size=max_size_dataset,
-            experiment = args.experiment_name)
+        dataset_indicator = 0
     elif args.dataset_name == 'Youtube':
-        dataset = Dataset_300W_YT(
-            root_dir=os.path.join(filepath_to_data),
-            width_in=width_in, height_in=height_in, width_out=width_out,
-            height_out=height_out,
-            num_landmarks=args.num_landmarks,
-            rbf_width=args.rbf_width,
-            which_dataset=1,
-            force_new_pickle=args.force_new_pickle,
-            test_dataset=args.test_dataset,
-            landmarks_collapsed=args.landmarks_collapsed,
-            max_size=max_size_dataset,
-            experiment = args.experiment_name)
+        dataset_indicator = 1
     elif args.dataset_name == 'Both':
-        dataset = Dataset_300W_YT(
-            root_dir=os.path.join(filepath_to_data),
-            width_in=width_in, height_in=height_in, width_out=width_out,
-            height_out=height_out,
-            num_landmarks=args.num_landmarks,
-            rbf_width=args.rbf_width,
-            which_dataset=2,
-            force_new_pickle=args.force_new_pickle,
-            test_dataset=args.test_dataset,
-            landmarks_collapsed=args.landmarks_collapsed,
-            max_size=max_size_dataset,
-            experiment = args.experiment_name)
+        dataset_indicator = 2
+    elif args.dataset_name == 'Benchmark':
+        dataset_indicator = 3
     else:
         raise ValueError
+
+    dataset = Dataset_300W_YT(
+        root_dir=os.path.join(filepath_to_data),
+        width_in=width_in, height_in=height_in, width_out=width_out,
+        height_out=height_out,
+        num_landmarks=args.num_landmarks,
+        rbf_width=args.rbf_width,
+        which_dataset=dataset_indicator,
+        force_new_pickle=args.force_new_pickle,
+        test_dataset=args.test_dataset,
+        landmarks_collapsed=args.landmarks_collapsed,
+        max_size=max_size_dataset,
+        experiment=args.experiment_name)
 
     data_provider = data_providers.DataProviderFLD
 
