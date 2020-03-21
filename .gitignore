@@ -34,6 +34,7 @@ Cluster/exp_*/saved_models
 Cluster/exp_Both/
 Cluster/exp_300W/
 Cluster/exp_null/
+Cluster/exp_null_2/
 Cluster/exp_Skip/
 Cluster/exp_debug_nme/
 Cluster/exp_baseline_deterministic/
