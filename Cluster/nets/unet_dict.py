@@ -7,7 +7,7 @@ from math import gcd
 
 class ContractingBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size=3, depthwise_conv=False):
+    def __init__(self, in_channels, out_channels, kernel_size=3, depthwise_conv="None"):
         super(ContractingBlock, self).__init__()
         self.depthwise_conv=depthwise_conv
         self.in_channels=in_channels
@@ -18,7 +18,7 @@ class ContractingBlock(nn.Module):
 
 
     def build_module(self):
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
             groups_1 = gcd(self.out_channels,self.in_channels)
             groups_2 = self.out_channels
         else:
@@ -29,7 +29,7 @@ class ContractingBlock(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.in_channels, out_channels=self.out_channels, groups=groups_1, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.out_channels)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
             self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.out_channels,
                                                         out_channels=self.out_channels, padding=0)
             self.layer_dict['relu_1_m'] = torch.nn.ReLU()
@@ -38,7 +38,7 @@ class ContractingBlock(nn.Module):
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.out_channels, out_channels=self.out_channels, groups=groups_2, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.out_channels)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
             self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.out_channels,
                                                         out_channels=self.out_channels, padding=0)
             self.layer_dict['relu_2_m'] = torch.nn.ReLU()
@@ -50,17 +50,17 @@ class ContractingBlock(nn.Module):
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
             out = self.layer_dict["conv_1_m"](out)
             out = self.layer_dict["relu_1_m"](out)
             out = self.layer_dict["bn_1_m"](out)
         out = self.layer_dict['conv_2'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
             out = self.layer_dict['relu_2'](out)
         else:
             out = self.layer_dict['relu_2'](out + skip)
         out = self.layer_dict['bn_2'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
             out = self.layer_dict["conv_2_m"](out)
             out = self.layer_dict["relu_2_m"](out+skip)
             out = self.layer_dict["bn_2_m"](out)
@@ -68,7 +68,7 @@ class ContractingBlock(nn.Module):
 
 class Bottleneck(nn.Module):
 
-    def __init__(self, bottle_neck_channels, kernel_size=3, depthwise_conv=False):
+    def __init__(self, bottle_neck_channels, kernel_size=3, depthwise_conv="None"):
         super(Bottleneck, self).__init__()
         self.depthwise_conv = depthwise_conv
         self.bottle_neck_channels = bottle_neck_channels
@@ -77,7 +77,7 @@ class Bottleneck(nn.Module):
         self.build_module()
 
     def build_module(self):
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
             groups_1 = self.bottle_neck_channels // 2
             groups_2 = self.bottle_neck_channels
         else:
@@ -88,7 +88,7 @@ class Bottleneck(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.bottle_neck_channels // 2, out_channels=self.bottle_neck_channels, groups=groups_1, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.bottle_neck_channels)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
             self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1,
                                                         in_channels=self.bottle_neck_channels,
                                                         out_channels=self.bottle_neck_channels,
@@ -98,7 +98,7 @@ class Bottleneck(nn.Module):
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.bottle_neck_channels, out_channels=self.bottle_neck_channels, groups=groups_2, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.bottle_neck_channels)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
             self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1,
                                                         in_channels=self.bottle_neck_channels,
                                                         out_channels=self.bottle_neck_channels,
@@ -106,7 +106,7 @@ class Bottleneck(nn.Module):
             self.layer_dict['relu_2_m'] = torch.nn.ReLU()
             self.layer_dict['bn_2_m'] = torch.nn.BatchNorm2d(self.bottle_neck_channels)
         self.layer_dict['deconv']=torch.nn.ConvTranspose2d(in_channels=self.bottle_neck_channels, out_channels=self.bottle_neck_channels // 2, kernel_size=self.kernel_size, groups=groups_1, stride=2, padding=1, output_padding=1)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
             self.layer_dict['conv_3_m'] = torch.nn.Conv2d(kernel_size=1,
                                                         in_channels=self.bottle_neck_channels//2,
                                                         out_channels=self.bottle_neck_channels//2,
@@ -120,23 +120,23 @@ class Bottleneck(nn.Module):
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
             out = self.layer_dict["conv_1_m"](out)
             out = self.layer_dict["relu_1_m"](out)
             out = self.layer_dict["bn_1_m"](out)
 
         out = self.layer_dict['conv_2'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
             out = self.layer_dict['relu_2'](out)
         else:
             out = self.layer_dict['relu_2'](out + skip)
         out = self.layer_dict['bn_2'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
             out = self.layer_dict["conv_2_m"](out)
             out = self.layer_dict["relu_2_m"](out+skip)
             out = self.layer_dict["bn_2_m"](out)
         out = self.layer_dict['deconv'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
             out = self.layer_dict["conv_3_m"](out)
             out = self.layer_dict["relu_3_m"](out)
             out = self.layer_dict["bn_3_m"](out)
@@ -144,7 +144,7 @@ class Bottleneck(nn.Module):
 
 class ExpansiveBlock(nn.Module):
 
-    def __init__(self, in_channels, mid_channel, out_channels, kernel_size=3,depthwise_conv=False):
+    def __init__(self, in_channels, mid_channel, out_channels, kernel_size=3,depthwise_conv="None"):
         super(ExpansiveBlock, self).__init__()
 
         self.depthwise_conv = depthwise_conv
@@ -156,7 +156,7 @@ class ExpansiveBlock(nn.Module):
         self.build_module()
 
     def build_module(self):
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
             groups_1 = 1
             groups_2 = 1
             groups_3 = 1
@@ -169,7 +169,7 @@ class ExpansiveBlock(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.in_channels, out_channels=self.mid_channel, groups=groups_1, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.mid_channel)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
             self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1,
                                                         in_channels=self.mid_channel,
                                                         out_channels=self.mid_channel,
@@ -180,7 +180,7 @@ class ExpansiveBlock(nn.Module):
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.mid_channel, out_channels=self.mid_channel, groups=groups_2, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.mid_channel)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
             self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1,
                                                           in_channels=self.mid_channel,
                                                           out_channels=self.mid_channel,
@@ -188,7 +188,7 @@ class ExpansiveBlock(nn.Module):
             self.layer_dict['relu_2_m'] = torch.nn.ReLU()
             self.layer_dict['bn_2_m'] = torch.nn.BatchNorm2d(self.mid_channel)
         self.layer_dict['deconv']=torch.nn.ConvTranspose2d(in_channels=self.mid_channel, out_channels=self.out_channels, kernel_size=3, stride=2, groups=groups_3, padding=1, output_padding=1)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
             self.layer_dict['conv_3_m'] = torch.nn.Conv2d(kernel_size=1,
                                                           in_channels=self.out_channels,
                                                           out_channels=self.out_channels,
@@ -201,24 +201,24 @@ class ExpansiveBlock(nn.Module):
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
             out = self.layer_dict["conv_1_m"](out)
             out = self.layer_dict["relu_1_m"](out)
             out = self.layer_dict["bn_1_m"](out)
 
         out = self.layer_dict['conv_2'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
             out = self.layer_dict['relu_2'](out)
         else:
             out = self.layer_dict['relu_2'](out + skip)
         out = self.layer_dict['bn_2'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
             out = self.layer_dict["conv_2_m"](out)
             out = self.layer_dict["relu_2_m"](out+skip)
             out = self.layer_dict["bn_2_m"](out)
 
         out = self.layer_dict['deconv'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
             out = self.layer_dict["conv_3_m"](out)
             out = self.layer_dict["relu_3_m"](out)
             out = self.layer_dict["bn_3_m"](out)
@@ -226,7 +226,7 @@ class ExpansiveBlock(nn.Module):
 
 class FinalBlock(nn.Module):
 
-    def __init__(self, in_channels, mid_channel, out_channels, kernel_size=3,depthwise_conv=False):
+    def __init__(self, in_channels, mid_channel, out_channels, kernel_size=3,depthwise_conv="None"):
         super(FinalBlock, self).__init__()
         self.depthwise_conv = depthwise_conv
         self.in_channels=in_channels
@@ -237,7 +237,7 @@ class FinalBlock(nn.Module):
         self.build_module()
 
     def build_module(self):
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Final":
             groups_1 = gcd(self.in_channels, self.out_channels)
             groups_2 = gcd(self.in_channels,self.mid_channel)
             groups_3 = self.mid_channel
@@ -251,7 +251,7 @@ class FinalBlock(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.in_channels, out_channels=self.mid_channel, groups= groups_2, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.mid_channel)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Final":
             self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.mid_channel,
                                                         out_channels=self.mid_channel, padding=0)
             self.layer_dict['relu_1_m'] = torch.nn.ReLU()
@@ -260,7 +260,7 @@ class FinalBlock(nn.Module):
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.mid_channel, out_channels=self.mid_channel, groups= groups_3, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.mid_channel)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Final":
             self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.mid_channel,
                                                         out_channels=self.mid_channel, padding=0)
             self.layer_dict['relu_2_m'] = torch.nn.ReLU()
@@ -268,7 +268,7 @@ class FinalBlock(nn.Module):
         self.layer_dict['conv_3'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.mid_channel, out_channels=self.out_channels, groups= groups_4)
         self.layer_dict['relu_3']=torch.nn.ReLU()
         self.layer_dict['bn_3']=torch.nn.BatchNorm2d(self.out_channels)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Final":
             self.layer_dict['conv_3_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.out_channels,
                                                         out_channels=self.out_channels, padding=0)
             self.layer_dict['relu_3_m'] = torch.nn.ReLU()
@@ -279,31 +279,31 @@ class FinalBlock(nn.Module):
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Final":
             out = self.layer_dict["conv_1_m"](out)
             out = self.layer_dict["relu_1_m"](out)
             out = self.layer_dict["bn_1_m"](out)
         out = self.layer_dict['conv_2'](out)
         out = self.layer_dict['relu_2'](out)
         out = self.layer_dict['bn_2'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Final":
             out = self.layer_dict["conv_2_m"](out)
             out = self.layer_dict["relu_2_m"](out)
             out = self.layer_dict["bn_2_m"](out)
         out = self.layer_dict['conv_3'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Final":
             out = self.layer_dict['relu_3'](out)
         else:
             out = self.layer_dict['relu_3'](out + skip)
         out = self.layer_dict['bn_3'](out)
-        if self.depthwise_conv:
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Final":
             out = self.layer_dict["conv_3_m"](out)
             out = self.layer_dict["relu_3_m"](out+skip)
             out = self.layer_dict["bn_3_m"](out)
         return out
 
 class UNetDict(nn.Module):
-    def contracting_block_seq(self, in_channels, out_channels, kernel_size=3, depthwise_conv=False):
+    def contracting_block_seq(self, in_channels, out_channels, kernel_size=3, depthwise_conv="None"):
         block = torch.nn.Sequential(
             torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=out_channels, padding=1),
             torch.nn.ReLU(),
@@ -315,7 +315,7 @@ class UNetDict(nn.Module):
         return block
 
 
-    def expansive_block_seq(self, in_channels, mid_channel, out_channels, kernel_size=3, depthwise_conv=False):
+    def expansive_block_seq(self, in_channels, mid_channel, out_channels, kernel_size=3, depthwise_conv="None"):
         block = torch.nn.Sequential(
             torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=mid_channel, padding=1),
             torch.nn.ReLU(),
@@ -328,7 +328,7 @@ class UNetDict(nn.Module):
         )
         return block
 
-    def bottle_neck_seq(self, bottle_neck_channels, depthwise_conv=False):
+    def bottle_neck_seq(self, bottle_neck_channels, depthwise_conv="None"):
 
         block= torch.nn.Sequential(
             torch.nn.Conv2d(kernel_size=3, in_channels=bottle_neck_channels//2, out_channels=bottle_neck_channels, padding=1),
@@ -344,7 +344,7 @@ class UNetDict(nn.Module):
 
 
 
-    def final_block_seq(self, in_channels, mid_channel, out_channels, kernel_size=3, depthwise_conv=False):
+    def final_block_seq(self, in_channels, mid_channel, out_channels, kernel_size=3, depthwise_conv="None"):
         block = torch.nn.Sequential(
             torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=mid_channel, padding=1),
             torch.nn.ReLU(),
@@ -358,7 +358,7 @@ class UNetDict(nn.Module):
         )
         return block
 
-    def __init__(self, in_channel, out_channel, hour_glass_depth, bottle_neck_channels,use_skip, prune_prob=0, pruning_method=None, depthwise_conv=False):
+    def __init__(self, in_channel, out_channel, hour_glass_depth, bottle_neck_channels,use_skip, prune_prob=0, pruning_method=None, depthwise_conv="None"):
         super(UNetDict, self).__init__()
         # Encode
         self.hour_glass_depth=hour_glass_depth

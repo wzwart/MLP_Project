@@ -3,11 +3,11 @@
   "batch_size": 5,
   "continue_from_epoch": -1,
   "seed": 0,
-  "num_epochs": 1,
-  "experiment_name": "exp_null",
+  "num_epochs": 300,
+  "experiment_name": "exp_benchmark_indoor_depthwise_final",
   "use_gpu": true,
   "use_tqdm": true,
-  "max_size_dataset": 100,
+  "max_size_dataset": -1,
   "test_dataset": "indoor",
   "num_landmarks": 68,
   "landmarks_collapsed": false,
@@ -18,15 +18,15 @@
   "rbf_width": 0.03,
   "prune_prob": 0,
   "prune_method": "global",
-  "force_new_pickle": false,
+  "force_new_pickle": true,
   "Hourglass_depth": 4,
   "Hourglass_bottleneck_channels": 1024,
   "use_skip": true,
-  "depthwise_conv": "All",
+  "depthwise_conv": "Final",
   "patience": 30,
   "normalisation": "corner",
   "save_model_per_n_epochs": 20,
-  "experiment_name_graph": ["exp_null"]
+  "experiment_name_graph": ["exp_benchmark_indoor_depthwise_final"]
 }
 
 
