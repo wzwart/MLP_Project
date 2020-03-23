@@ -65,6 +65,7 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
         rbf_width=args.rbf_width,
         which_dataset=dataset_indicator,
         force_new_pickle=args.force_new_pickle,
+        save_pickle=args.save_pickle,
         test_dataset=args.test_dataset,
         landmarks_collapsed=args.landmarks_collapsed,
         max_size=max_size_dataset,

@@ -19,6 +19,7 @@
   "prune_prob": 0,
   "prune_method": "global",
   "force_new_pickle": true,
+  "save_pickle": false,
   "Hourglass_depth": 4,
   "Hourglass_bottleneck_channels": 1024,
   "use_skip": true,

@@ -71,6 +71,8 @@ def get_args():
                         help='Probability of a node being pruned')
     parser.add_argument('--force_new_pickle', nargs="?", type=str2bool, default=False,
                         help='Force pickle')
+    parser.add_argument('--save_pickle', nargs="?", type=str2bool, default=True,
+                        help='Save pickle')
     parser.add_argument('--depthwise_conv', nargs="?", type=str, default="None",
                         help='apply depth-wise convolution')
     parser.add_argument('--Hourglass_depth', nargs="?", type=int, default=2,
