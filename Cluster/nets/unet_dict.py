@@ -157,9 +157,9 @@ class ExpansiveBlock(nn.Module):
 
     def build_module(self):
         if self.depthwise_conv == "All" or self.depthwise_conv == "Expansive":
-            groups_1 = 1
-            groups_2 = 1
-            groups_3 = 1
+            groups_1 = gcd(self.mid_channel,self.in_channels)
+            groups_2 = self.mid_channel
+            groups_3 = gcd(self.out_channels,self.mid_channel)
         else:
             groups_1 = 1
             groups_2 = 1
