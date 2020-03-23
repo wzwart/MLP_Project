@@ -27,6 +27,7 @@
   "patience": 30,
   "normalisation": "corner",
   "save_model_per_n_epochs": 20,
+  "use_f16": false,
   "experiment_name_graph": ["exp_benchmark_indoor_depthwise_first"]
 }
 
