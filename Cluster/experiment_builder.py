@@ -19,7 +19,7 @@ from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
     def __init__(self, network_model, experiment_name, num_epochs, save_model_per_n_epochs, rbf_width, data_provider,train_data, val_data,
-                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, patience=-1, normalisation="corner", pruning_method=None, use_tqdm=True, continue_from_epoch=-1):
+                 test_data, use_gpu, criterion, optimizer, prune_prob = 0, patience=-1, normalisation="corner", pruning_method=None, use_tqdm=True, continue_from_epoch=-1, use_f16=False):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
         on a given dataset. It also takes care of saving per epoch models and automatically inferring the best val model
@@ -55,6 +55,7 @@ class ExperimentBuilder(nn.Module):
         self.patience_counter = patience
         self.normalisation = normalisation
         self.pruning_method = pruning_method
+        self.use_f16 = use_f16
 
         try:
             self.device = torch.cuda.current_device()
@@ -173,7 +174,10 @@ class ExperimentBuilder(nn.Module):
         hm = generateHeatmap(self.hm_kernel_size / 2, self.hm_kernel_size / 2, self.hm_kernel_size, self.hm_kernel_size,
                              rbf_width=rbf_width * np.sqrt(width * height) / self.hm_kernel_size)
         hm_kernel = np.array([[hm]])
-        self.hm_kernel = torch.Tensor(hm_kernel).float().to(self.device)
+        if(self.use_f16):
+            self.hm_kernel = torch.Tensor(hm_kernel).float().to(device=self.device, dtype=torch.half)
+        else:
+            self.hm_kernel = torch.Tensor(hm_kernel).float().to(device=self.device)
 
 
     def calc_nme(self, out, p, n):
@@ -234,11 +238,19 @@ class ExperimentBuilder(nn.Module):
 
 
         if type(x) is np.ndarray:
-            x= torch.Tensor(x).float().to(device=self.device)
-            y =torch.Tensor(y).float().to(device=self.device)  # send data to device as torch tensors
+            if (self.use_f16):
+                x= torch.Tensor(x).float().to(device=self.device, dtype=torch.half)
+                y =torch.Tensor(y).float().to(device=self.device, dtype=torch.half)  # send data to device as torch tensors
+            else:
+                x = torch.Tensor(x).float().to(device=self.device)
+                y = torch.Tensor(y).float().to(device=self.device)  # send data to device as torch tensors
 
-        x = x.to(self.device)
-        y = y.to(self.device)
+        if (self.use_f16):
+            x = x.to(self.device, dtype=torch.half)
+            y = y.to(self.device, dtype=torch.half)
+        else:
+            x = x.to(self.device)
+            y = y.to(self.device)
         out = self.model.forward(x)  # forward the data in the model
 
         if str(self.criterion)=="CrossEntropyLoss()":
@@ -270,11 +282,19 @@ class ExperimentBuilder(nn.Module):
         # if len(y.shape) > 1:
         #     y = np.argmax(y, axis=1)  # convert one hot encoded labels to single integer labels
         if type(x) is np.ndarray:
-            x = torch.Tensor(x).float().to(device=self.device)
-            y = torch.Tensor(y).float().to(device=self.device)  # convert data to pytorch tensors and send to the computation device
+            if (self.use_f16):
+                x = torch.Tensor(x).float().to(device=self.device, dtype=torch.half)
+                y = torch.Tensor(y).float().to(device=self.device, dtype=torch.half)  # convert data to pytorch tensors and send to the computation device
+            else:
+                x = torch.Tensor(x).float().to(device=self.device)
+                y = torch.Tensor(y).float().to(device=self.device)  # convert data to pytorch tensors and send to the computation device
 
-        x = x.to(self.device)
-        y = y.to(self.device)
+        if (self.use_f16):
+            x = x.to(self.device, dtype=torch.half)
+            y = y.to(self.device, dtype=torch.half)
+        else:
+            x = x.to(self.device)
+            y = y.to(self.device)
         out = self.model.forward(x)  # forward the data in the model
 
         if str(self.criterion)=="CrossEntropyLoss()":
@@ -488,8 +508,10 @@ class ExperimentBuilder(nn.Module):
         first=True
         for (x,y,p,n) in data: #is only executed once, data can only be accessed through an enumerator
             if type(x) is np.ndarray:
-
-                x_net =  torch.Tensor(x).float()[:number_images].to(device=self.device)
+                if (self.use_f16):
+                    x_net =  torch.Tensor(x).float()[:number_images].to(device=self.device, dtype=torch.half)
+                else:
+                    x_net =  torch.Tensor(x).float()[:number_images].to(device=self.device)
                 x_img = x.copy()
                 y_img = y.copy()
                 p_img = p.copy()

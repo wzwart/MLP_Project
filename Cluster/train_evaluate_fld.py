@@ -1,9 +1,12 @@
 import numpy as np
 import os
 import getpass
+import torch.nn as nn
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+
+from adam16 import Adam16
 from data_sets import data_providers as data_providers
 from arg_extractor import get_args
 from experiment_builder import ExperimentBuilder
@@ -87,9 +90,18 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
     else:
         net = UNetDict(in_channel=3, out_channel=args.num_landmarks, hour_glass_depth=args.Hourglass_depth, bottle_neck_channels=args.Hourglass_bottleneck_channels,use_skip = args.use_skip, depthwise_conv=args.depthwise_conv, prune_prob=args.prune_prob, pruning_method=args.pruning_method)
 
+    if(args.use_f16):
+        net.half()  # convert to half precision
+        #for layer in net.modules():
+        #    if isinstance(layer, nn.BatchNorm2d):
+         #       layer.float()
+
     print("Number of weights : {}\n".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001)
+    if (args.use_f16):
+        optimizer = Adam16(params=net.parameters(), lr=0.0001)
+    else:
+        optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001)
 
 else:
     print("Data Set not supported")
@@ -110,6 +122,7 @@ conv_experiment = ExperimentBuilder(network_model=net, use_gpu=args.use_gpu,
                                     pruning_method=args.pruning_method,
                                     patience=args.patience,
                                     normalisation=args.normalisation,
+                                    use_f16=args.use_f16,
                                     optimizer=optimizer
                                     )  # build an experiment object
 
