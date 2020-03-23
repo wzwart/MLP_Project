@@ -18,7 +18,7 @@ class ContractingBlock(nn.Module):
 
 
     def build_module(self):
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting" or self.depthwise_conv == "First":
             groups_1 = gcd(self.out_channels,self.in_channels)
             groups_2 = self.out_channels
         else:
@@ -29,7 +29,7 @@ class ContractingBlock(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.in_channels, out_channels=self.out_channels, groups=groups_1, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.out_channels)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting" or self.depthwise_conv == "First":
             self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.out_channels,
                                                         out_channels=self.out_channels, padding=0)
             self.layer_dict['relu_1_m'] = torch.nn.ReLU()
@@ -38,7 +38,7 @@ class ContractingBlock(nn.Module):
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.out_channels, out_channels=self.out_channels, groups=groups_2, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.out_channels)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting" or self.depthwise_conv == "First":
             self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1, in_channels=self.out_channels,
                                                         out_channels=self.out_channels, padding=0)
             self.layer_dict['relu_2_m'] = torch.nn.ReLU()
@@ -50,17 +50,17 @@ class ContractingBlock(nn.Module):
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting" or self.depthwise_conv == "First":
             out = self.layer_dict["conv_1_m"](out)
             out = self.layer_dict["relu_1_m"](out)
             out = self.layer_dict["bn_1_m"](out)
         out = self.layer_dict['conv_2'](out)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting" or self.depthwise_conv == "First":
             out = self.layer_dict['relu_2'](out)
         else:
             out = self.layer_dict['relu_2'](out + skip)
         out = self.layer_dict['bn_2'](out)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Contracting" or self.depthwise_conv == "First":
             out = self.layer_dict["conv_2_m"](out)
             out = self.layer_dict["relu_2_m"](out+skip)
             out = self.layer_dict["bn_2_m"](out)
@@ -77,7 +77,7 @@ class Bottleneck(nn.Module):
         self.build_module()
 
     def build_module(self):
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck" or self.depthwise_conv == "First":
             groups_1 = self.bottle_neck_channels // 2
             groups_2 = self.bottle_neck_channels
         else:
@@ -88,7 +88,7 @@ class Bottleneck(nn.Module):
         self.layer_dict['conv_1']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.bottle_neck_channels // 2, out_channels=self.bottle_neck_channels, groups=groups_1, padding=1)
         self.layer_dict['relu_1']=torch.nn.ReLU()
         self.layer_dict['bn_1']=torch.nn.BatchNorm2d(self.bottle_neck_channels)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck" or self.depthwise_conv == "First":
             self.layer_dict['conv_1_m'] = torch.nn.Conv2d(kernel_size=1,
                                                         in_channels=self.bottle_neck_channels,
                                                         out_channels=self.bottle_neck_channels,
@@ -98,7 +98,7 @@ class Bottleneck(nn.Module):
         self.layer_dict['conv_2']=torch.nn.Conv2d(kernel_size=self.kernel_size, in_channels=self.bottle_neck_channels, out_channels=self.bottle_neck_channels, groups=groups_2, padding=1)
         self.layer_dict['relu_2']=torch.nn.ReLU()
         self.layer_dict['bn_2']=torch.nn.BatchNorm2d(self.bottle_neck_channels)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck" or self.depthwise_conv == "First":
             self.layer_dict['conv_2_m'] = torch.nn.Conv2d(kernel_size=1,
                                                         in_channels=self.bottle_neck_channels,
                                                         out_channels=self.bottle_neck_channels,
@@ -106,7 +106,7 @@ class Bottleneck(nn.Module):
             self.layer_dict['relu_2_m'] = torch.nn.ReLU()
             self.layer_dict['bn_2_m'] = torch.nn.BatchNorm2d(self.bottle_neck_channels)
         self.layer_dict['deconv']=torch.nn.ConvTranspose2d(in_channels=self.bottle_neck_channels, out_channels=self.bottle_neck_channels // 2, kernel_size=self.kernel_size, groups=groups_1, stride=2, padding=1, output_padding=1)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck" or self.depthwise_conv == "First":
             self.layer_dict['conv_3_m'] = torch.nn.Conv2d(kernel_size=1,
                                                         in_channels=self.bottle_neck_channels//2,
                                                         out_channels=self.bottle_neck_channels//2,
@@ -120,23 +120,23 @@ class Bottleneck(nn.Module):
         out = self.layer_dict["conv_1"](x)
         out = self.layer_dict['relu_1'](out)
         out = self.layer_dict['bn_1'](out)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck" or self.depthwise_conv == "First":
             out = self.layer_dict["conv_1_m"](out)
             out = self.layer_dict["relu_1_m"](out)
             out = self.layer_dict["bn_1_m"](out)
 
         out = self.layer_dict['conv_2'](out)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck" or self.depthwise_conv == "First":
             out = self.layer_dict['relu_2'](out)
         else:
             out = self.layer_dict['relu_2'](out + skip)
         out = self.layer_dict['bn_2'](out)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck" or self.depthwise_conv == "First":
             out = self.layer_dict["conv_2_m"](out)
             out = self.layer_dict["relu_2_m"](out+skip)
             out = self.layer_dict["bn_2_m"](out)
         out = self.layer_dict['deconv'](out)
-        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck":
+        if self.depthwise_conv == "All" or self.depthwise_conv == "Bottleneck" or self.depthwise_conv == "First":
             out = self.layer_dict["conv_3_m"](out)
             out = self.layer_dict["relu_3_m"](out)
             out = self.layer_dict["bn_3_m"](out)
