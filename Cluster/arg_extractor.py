@@ -85,6 +85,8 @@ def get_args():
                         help='How often save model')
     parser.add_argument('--patience', nargs="?", type=int, default=-1,
                         help='Patience for early stopping')
+    parser.add_argument('--use_f16', nargs="?", type=str2bool, default=False,
+                        help='Whether to use F16')
     parser.add_argument('--normalisation', type=str, help='Normalisation constant to use', default="corner")
     parser.add_argument('--pruning_method', type=str, help='pruning method to use, \"random_unstructured\" , ')
     parser.add_argument('--test_dataset', type=str, help='Test dataset to use when Youtube dataset is selected')
