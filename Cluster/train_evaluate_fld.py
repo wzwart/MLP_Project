@@ -94,12 +94,14 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
         net.half()  # convert to half precision
         #for layer in net.modules():
         #    if isinstance(layer, nn.BatchNorm2d):
-         #       layer.float()
+        #        layer.float()
 
     print("Number of weights : {}\n".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
     criterion = torch.nn.MSELoss()
     if (args.use_f16):
-        optimizer = Adam16(params=net.parameters(), lr=0.0001)
+        #optimizer = Adam16(params=net.parameters(), lr=0.0001)
+        #optimizer = torch.optim.SGD(params=net.parameters(), lr=0.01, momentum=0.9)
+        optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001, eps=1e-04)
     else:
         optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001)
 
