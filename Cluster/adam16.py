@@ -18,8 +18,6 @@ class Adam16(Optimizer):
                         weight_decay=weight_decay)
         params = list(params)
         super(Adam16, self).__init__(params, defaults)
-        # for group in self.param_groups:
-        # for p in group['params']:
 
         self.fp32_param_groups = [p.data.float().cuda() for p in params]
         if not isinstance(self.fp32_param_groups[0], dict):
@@ -69,7 +67,6 @@ class Adam16(Optimizer):
                 bias_correction2 = 1 - beta2 ** state['step']
                 step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
 
-                # print(type(fp32_p))
                 fp32_p.addcdiv_(-step_size, exp_avg, denom)
                 p.data = fp32_p.half()
 

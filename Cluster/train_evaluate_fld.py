@@ -103,7 +103,7 @@ if args.dataset_name == '300W' or args.dataset_name == 'Youtube' or args.dataset
         #optimizer = torch.optim.SGD(params=net.parameters(), lr=0.01, momentum=0.9)
         optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001, eps=1e-04)
     else:
-        optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001)
+        optimizer = torch.optim.Adam(params=net.parameters(), lr=0.0001, eps=1e-04)
 
 else:
     print("Data Set not supported")

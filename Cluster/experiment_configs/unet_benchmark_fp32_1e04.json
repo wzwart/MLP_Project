@@ -4,7 +4,7 @@
   "continue_from_epoch": -1,
   "seed": 0,
   "num_epochs": 300,
-  "experiment_name": "exp_benchmark_fp16_adam32_BN16_depthwise_first",
+  "experiment_name": "exp_benchmark_fp32_1e04",
   "use_gpu": true,
   "use_tqdm": true,
   "max_size_dataset": -1,
@@ -23,12 +23,12 @@
   "Hourglass_depth": 4,
   "Hourglass_bottleneck_channels": 1024,
   "use_skip": true,
-  "depthwise_conv": "First",
+  "depthwise_conv": "None",
   "patience": 30,
   "normalisation": "corner",
   "save_model_per_n_epochs": 20,
-  "use_f16": true,
-  "experiment_name_graph": ["exp_benchmark_fp16_adam32_BN16_depthwise_first"]
+  "use_f16": false,
+  "experiment_name_graph": ["exp_benchmark_fp32_1e04"]
 }
 
 
