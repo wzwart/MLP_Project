@@ -2,8 +2,9 @@ import torch
 import numpy as np
 from torch.nn.utils import prune
 import torch.nn as nn
-
+import pandas as pd
 class Pruner():
+
     def __init__(self, layer_dict, prune_prob, pruning_method=None, top_pruner=True):
         self.layer_dict=layer_dict
         self.prune_prob=prune_prob
@@ -48,13 +49,26 @@ class Pruner():
                 pruning_method=prune.L1Unstructured,
                 amount=self.prune_prob,
             )
+            data = []
+
             for parameter_to_prune in self.parameters_to_prune:
-                print(
-                    f"Sparsity in { parameter_to_prune[0]}: {100. * float(torch.sum(parameter_to_prune[0].weight == 0))/ float(parameter_to_prune[0].weight.nelement()):.2f}%"
-                )
+                print(sum(p.numel() for p in parameter_to_prune[0].parameters() if p.requires_grad))
+                data_temp = [parameter_to_prune[0],100. * float(torch.sum(parameter_to_prune[0].weight == 0))/ float(parameter_to_prune[0].weight.nelement()),sum(p.numel() for p in parameter_to_prune[0].parameters() if p.requires_grad)]
+                data.append(data_temp)
+                #print(
+                    #f"Sparsity in { parameter_to_prune[0]}: {100. * float(torch.sum(parameter_to_prune[0].weight == 0))/ float(parameter_to_prune[0].weight.nelement()):.2f}%"
+                #)
 
-
-
+            df = pd.DataFrame(data, columns=['Layer', 'Pruned Percentage','Weights'])
+            direct = 'exp_jan_prune/example_jan' +'_'+str(self.prune_prob)+'.csv'
+            df.to_csv(direct,index=False)
+            data2 = pd.read_csv(direct)
+            new = data2["Layer"].str.split("(", n=1, expand=True)
+            data2.drop(columns=["Layer"], inplace=True)
+            data2["Layer"] = new[0]
+            columns_titles = ["Layer", "Pruned Percentage",'Weights']
+            data2 = data2.reindex(columns=columns_titles)
+            data2.to_csv(direct, index=False)
     def prune(self, device):
         if self.prune_prob==0 or self.pruning_method !="adhoc": # return quickly
             return

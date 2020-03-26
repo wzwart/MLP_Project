@@ -446,18 +446,22 @@ class ExperimentBuilder(nn.Module):
             weight_count = self.pruner.weight_count
             weight_count_pruned = self.pruner.weight_count_pruned
             print(f"Weight :  pruned/ all  = {weight_count_pruned}/{weight_count} / ={100*weight_count_pruned/weight_count:.2f}%")
-            print(self.pruner.parameters_to_prune)
+            #print(self.pruner.parameters_to_prune)
         current_epoch_losses = {"test_nme": [], "test_loss": []}  # initialize a statistics dict
         print(self.best_val_model_idx)
         current_epoch_losses = self.run_epoch(current_epoch_losses=current_epoch_losses,epoch_idx=self.best_val_model_idx, which_set="test")
 
         test_losses = {key: [np.mean(value)] for key, value in
                        current_epoch_losses.items()}  # save test set metrics in dict format
-
-        save_statistics(experiment_log_dir=self.experiment_logs, filename='test_summary.csv',
-                        # save test set metrics on disk in .csv format
-                        stats_dict=test_losses, current_epoch=0, continue_from_mode=False)
-
+        if self.prune_prob != 0:
+            filename2 = 'test_summary' +'_'+str(self.prune_prob)+'.csv'
+            save_statistics(experiment_log_dir=self.experiment_logs, filename = filename2,
+                            # save test set metrics on disk in .csv format
+                            stats_dict=test_losses, current_epoch=0, continue_from_mode=False)
+        else:
+            save_statistics(experiment_log_dir=self.experiment_logs, filename='test_summary.csv',
+                            # save test set metrics on disk in .csv format
+                            stats_dict=test_losses, current_epoch=0, continue_from_mode=False)
         return total_losses, test_losses
 
     def render(self,data,number_images):
